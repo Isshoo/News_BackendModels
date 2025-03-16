@@ -1,0 +1,22 @@
+# Virtual environment
+.venv/
+.env
+
+# Bytecode files
+__pycache__/
+
+# Dataset
+dataset/
+
+# Model
+*.pkl
+*.joblib
+
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.vscode/
+*.DS_Store
