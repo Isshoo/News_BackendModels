@@ -1,6 +1,11 @@
 import ollama
 from openai import OpenAI
 import re
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 
 class DeepSeekClassifier:
@@ -23,13 +28,18 @@ class DeepSeekClassifier:
 
     @staticmethod
     def _classify_api(prompt):
-        # Inisialisasi client OpenRouter (gunakan API Key dari env untuk keamanan)
-        client = OpenAI(base_url="https://openrouter.ai/api/v1",
-                        api_key="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")
         """ Menggunakan OpenRouter API """
+        api_key = DEEPSEEK_API_KEY
+        if not api_key:
+            raise ValueError(
+                "DeepSeek API Key tidak ditemukan. Pastikan sudah ada di .env")
+
+        client = OpenAI(base_url="https://openrouter.ai/api/v1",
+                        api_key=api_key)
+
         response = client.chat.completions.create(
             model="deepseek/deepseek-r1-distill-llama-70b:free",
-            messages=[{"role": "user", "content": f"{prompt}"}],
+            messages=[{"role": "user", "content": prompt}],
         )
 
         response_text = response.choices[0].message.content.strip()
