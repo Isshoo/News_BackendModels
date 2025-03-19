@@ -21,8 +21,8 @@ class HybridClassifier:
         self.tfidf_matrix = self.vectorizer.fit_transform(X_train).toarray()
         self.labels = y_train
 
-        self.knn.fit(self.tfidf_matrix, y_train)
         self.decision_tree.fit(X_train, y_train)
+        self.knn.fit(self.tfidf_matrix, y_train)
 
     def predict(self, X_test):
         """Melakukan prediksi menggunakan Decision Tree atau KNN."""

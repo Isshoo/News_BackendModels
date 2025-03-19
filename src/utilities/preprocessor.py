@@ -35,13 +35,6 @@ class Preprocessor:
         # Menangani missing values
         df.dropna(subset=["contentSnippet", "topik"], inplace=True)
 
-        # Membersihkan teks
-        df["clean_text"] = df["contentSnippet"].apply(
-            Preprocessor.preprocess_text)
-
-        # Menghapus baris dengan teks kosong setelah preprocessing
-        df = df[df["clean_text"].str.strip() != ""]
-
         return df
 
     @staticmethod

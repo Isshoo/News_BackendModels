@@ -13,6 +13,13 @@ class HybridModelTrainer:
         self.df = Preprocessor.preprocess_dataset(dataset_path)
 
     def train(self):
+        # Membersihkan teks
+        self.df["clean_text"] = self.df["contentSnippet"].apply(
+            Preprocessor.preprocess_text)
+
+        # Menghapus baris dengan teks kosong setelah preprocessing
+        self.df = self.df[self.df["clean_text"].str.strip() != ""]
+
         X_texts = self.df["clean_text"].tolist()
         y = self.df["topik"]
 
