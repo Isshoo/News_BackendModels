@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from src.routes import routes_bp  # Import blueprint utama
+from src.api.routes import routes_bp  # Import blueprint utama
 
 app = Flask(__name__)
 CORS(app)

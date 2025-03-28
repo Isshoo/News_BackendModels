@@ -1,4 +1,4 @@
-from src.services.classifier import NewsClassifier
+from src.features.classifier import NewsClassifier
 from src.processing.trainer import HybridModelTrainer
 import joblib
 import sys
@@ -12,7 +12,7 @@ def main():
         "Apakah anda ingin melakukan klasifikasi dengan melatih model baru? (y/n) : ")
     if pilihan == "y":
         # Load dataset dan preprocess
-        df = "./src/dataset/dataset-berita-ppl.csv"
+        df = "./src/datasets/dataset-berita-ppl.csv"
 
         # Latih model dan dapatkan hasilnya
         trainer = HybridModelTrainer(df)

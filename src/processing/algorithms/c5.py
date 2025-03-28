@@ -1,44 +1,34 @@
 import numpy as np
+from collections import Counter
 
 
 class CustomC5:
-    def __init__(self, vectorizer, threshold=0.75):
-        self.vectorizer = vectorizer
-        self.threshold = threshold
-        self.topics_keywords = {}
+    def __init__(self):
+        self.topic_data = {}
 
     def fit(self, X_train, y_train):
-        """Menyusun kata-kata terpenting untuk setiap topik."""
-        self.topics_keywords = self.get_top_keywords_for_each_topic(
-            X_train, y_train)
-
-    def get_top_keywords_for_each_topic(self, X_train, y_train, top_n=10):
-        """Mengambil kata kunci teratas untuk setiap topik berdasarkan TF-IDF."""
-        topic_keywords = {}
-
+        word_counts = {}
         for label in np.unique(y_train):
-            indices = [i for i, label_ in enumerate(
-                y_train) if label_ == label]
-            relevant_docs = [X_train[i] for i in indices]
-            tfidf_matrix = self.vectorizer.transform(relevant_docs).toarray()
-            feature_names = self.vectorizer.get_feature_names_out()
+            indices = np.where(y_train == label)[0]
+            word_freq = Counter()
+            for i in indices:
+                word_freq.update(X_train[i].split())
+            total_words = sum(word_freq.values())
+            entropy = -sum((count / total_words) * np.log2(count / total_words)
+                           for count in word_freq.values())
+            self.topic_data[label] = {
+                'entropy': entropy, 'word_freq': word_freq}
 
-            keyword_scores = np.mean(tfidf_matrix, axis=0)
-            top_indices = np.argsort(keyword_scores)[::-1][:top_n]
-            top_keywords = [feature_names[idx] for idx in top_indices]
+    def calculate_information_gain(self, text):
+        gains = {}
+        words = text.split()
+        for label, data in self.topic_data.items():
+            word_scores = [data['word_freq'].get(word, 0) for word in words]
+            avg_score = np.mean(word_scores) if word_scores else 0
+            gains[label] = avg_score
 
-            topic_keywords[label] = top_keywords
+        sorted_gains = sorted(gains.items(), key=lambda x: x[1], reverse=True)
 
-        return topic_keywords
-
-    def classify(self, vector):
-        """Mencocokkan dokumen dengan setiap topik berdasarkan kata kunci."""
-        for label, keywords in self.topics_keywords.items():
-            keyword_matches = sum([vector[self.vectorizer.vocabulary_.get(
-                keyword, -1)] > 0 for keyword in keywords])
-            match_percentage = keyword_matches / len(keywords)
-
-            if match_percentage >= self.threshold:
-                return label  # Klasifikasikan ke topik ini jika cocok
-
-        return None
+        if len(sorted_gains) > 1 and sorted_gains[0][1] == sorted_gains[1][1]:
+            return None, sorted_gains[:2]  # Butuh KNN
+        return sorted_gains[0][0], None  # Klasifikasi langsung

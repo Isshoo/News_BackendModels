@@ -1,35 +1,25 @@
 import numpy as np
+from collections import Counter
 
 
 class ManualKNN:
-    def __init__(self, n_neighbors=7):
+    def __init__(self, n_neighbors=5):
         self.n_neighbors = n_neighbors
-        self.X_train = None
-        self.y_train = None
 
-    def fit(self, X_train, y_train):
-        self.X_train = np.array(X_train)
+    def fit(self, X_train, y_train, vectorizer):
+        self.X_train = vectorizer.fit_transform(X_train).toarray()
         self.y_train = np.array(y_train)
+        self.vectorizer = vectorizer
 
-    def predict(self, X_test):
-        X_test = np.array(X_test)
-        predictions = []
+    def predict(self, X_test, relevant_labels):
+        X_test_vector = self.vectorizer.transform([X_test]).toarray()
+        relevant_indices = [i for i, label in enumerate(
+            self.y_train) if label in relevant_labels]
+        X_train_filtered = self.X_train[relevant_indices]
+        y_train_filtered = self.y_train[relevant_indices]
 
-        for test_vector in X_test:
-            # Hitung Euclidean Distance ke semua titik latih
-            distances = np.linalg.norm(self.X_train - test_vector, axis=1)
+        distances = np.linalg.norm(X_train_filtered - X_test_vector, axis=1)
+        nearest_indices = np.argsort(distances)[:self.n_neighbors]
+        nearest_labels = y_train_filtered[nearest_indices]
 
-            # Ambil indeks dari k tetangga terdekat
-            nearest_indices = np.argsort(distances)[:self.n_neighbors]
-
-            # Ambil label dari k tetangga
-            nearest_labels = self.y_train[nearest_indices]
-
-            # Voting untuk label terbanyak
-            unique_labels, counts = np.unique(
-                nearest_labels, return_counts=True)
-            predicted_label = unique_labels[np.argmax(counts)]
-
-            predictions.append(predicted_label)
-
-        return np.array(predictions)
+        return Counter(nearest_labels).most_common(1)[0][0]

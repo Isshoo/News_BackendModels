@@ -1,5 +1,5 @@
 from flask import Blueprint
-from src.routes.predict import predict_bp
+from src.api.routes.predict_route import predict_bp
 
 # Inisialisasi Blueprint utama untuk routes
 routes_bp = Blueprint("routes", __name__)

@@ -8,41 +8,33 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 
 class HybridClassifier:
-    def __init__(self, n_neighbors=7, threshold=0.75):
-        self.vectorizer = TfidfVectorizer()
-        self.knn = ManualKNN(n_neighbors=n_neighbors)
-        self.decision_tree = CustomC5(
-            self.vectorizer, threshold)
-        self.tfidf_matrix = None
-        self.labels = None
+    def __init__(self, n_neighbors=5):
+        self.c5 = CustomC5()
+        self.knn = ManualKNN(n_neighbors)
+        self.vectorizer = None
 
     def fit(self, X_train, y_train):
-        """Melatih model Hybrid dengan KNN dan Decision Tree."""
-        self.tfidf_matrix = self.vectorizer.fit_transform(X_train).toarray()
-        self.labels = y_train
-
-        self.decision_tree.fit(X_train, y_train)
-        self.knn.fit(self.tfidf_matrix, y_train)
+        self.c5.fit(X_train, y_train)
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        self.vectorizer = TfidfVectorizer()
+        self.knn.fit(X_train, y_train, self.vectorizer)
 
     def predict(self, X_test):
-        """Melakukan prediksi menggunakan Decision Tree atau KNN."""
-        X_tfidf = self.vectorizer.transform(X_test).toarray()
         predictions = []
-
-        for vector in X_tfidf:
-            predicted_label = self.decision_tree.classify(vector)
-            if predicted_label is None:
-                predicted_label = self.knn.predict([vector])[0]
-
-            predictions.append(predicted_label)
-
+        for text in X_test:
+            label, candidates = self.c5.calculate_information_gain(text)
+            if label is not None:
+                predictions.append(label)
+            else:
+                predictions.append(self.knn.predict(
+                    text, [c[0] for c in candidates]))
         return predictions
 
 
 if __name__ == "__main__":
     # Load dataset
     df = Preprocessor.preprocess_dataset(
-        "./src/dataset/dataset-berita-ppl.csv")
+        "./src/datasets/dataset-berita-ppl.csv")
 
     X_texts = df["clean_text"].tolist()
     y = df["topik"]

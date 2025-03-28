@@ -5,17 +5,22 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 from src.models.hybrid import HybridClassifier
-from src.preprocessing.preprocessor import Preprocessor
+from src.preprocessing.extends.dataset_preprocessor import DatasetPreprocessor
+from src.preprocessing.extends.text_preprocessor import TextPreprocessor
 
 
 class HybridModelTrainer:
     def __init__(self, dataset_path):
-        self.df = Preprocessor.preprocess_dataset(dataset_path)
+        self.dataset_preprocessor = DatasetPreprocessor()
+        self.text_preprocessor = TextPreprocessor()
+
+        # Memuat dataset
+        self.df = self.dataset_preprocessor.preprocess(dataset_path)
 
     def train(self):
         # Membersihkan teks
-        self.df["clean_text"] = self.df["contentSnippet"].apply(
-            Preprocessor.preprocess_text)
+        self.df["clean_text"] = self.text_preprocessor.preprocess(
+            self.df["contentSnippet"].tolist())
 
         # Menghapus baris dengan teks kosong setelah preprocessing
         self.df = self.df[self.df["clean_text"].str.strip() != ""]
@@ -24,7 +29,8 @@ class HybridModelTrainer:
         y = self.df["topik"]
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X_texts, y, test_size=0.2, stratify=y, random_state=42)
+            X_texts, y, test_size=0.2, stratify=y, random_state=42
+        )
 
         hybrid_model = HybridClassifier()
 
@@ -50,5 +56,5 @@ class HybridModelTrainer:
 
 
 if __name__ == "__main__":
-    trainer = HybridModelTrainer("./src/dataset/dataset-berita-ppl.csv")
+    trainer = HybridModelTrainer("./src/datasets/dataset-berita-ppl.csv")
     trainer.train()
