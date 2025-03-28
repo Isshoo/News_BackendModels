@@ -1,12 +1,12 @@
-from src.utilities.preprocessor import Preprocessor
-from src.services.training import HybridModelTrainer
 from src.services.classifier import NewsClassifier
+from src.processing.trainer import HybridModelTrainer
 import joblib
 import sys
 
+sys.path.append('./src')
+
 
 def main():
-    sys.path.append('./src')
 
     pilihan = input(
         "Apakah anda ingin melakukan klasifikasi dengan melatih model baru? (y/n) : ")

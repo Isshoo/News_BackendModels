@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-from src.utilities.preprocessor import Preprocessor
-from src.utilities.knn import ManualKNN
-from src.utilities.c5 import CustomC5
+from src.preprocessing.preprocessor import Preprocessor
+from src.processing.algorithms.knn import ManualKNN
+from src.processing.algorithms.c5 import CustomC5
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 

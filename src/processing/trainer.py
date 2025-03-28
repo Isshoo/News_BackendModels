@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 from src.models.hybrid import HybridClassifier
-from src.utilities.preprocessor import Preprocessor
+from src.preprocessing.preprocessor import Preprocessor
 
 
 class HybridModelTrainer:
