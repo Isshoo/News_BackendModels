@@ -5,14 +5,13 @@ import joblib
 
 
 class NewsClassifier:
-    def __init__(self, hybrid_model):
-        self.hybrid_model = hybrid_model
+    def __init__(self, hybrid_model_path='./src/models/saved/hybrid_model.joblib'):
+        self.hybrid_model = joblib.load(hybrid_model_path)
         self.text_preprocessor = TextPreprocessor()
 
     def classify(self, sample_text):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
         processed_sample_text = self.text_preprocessor.preprocess(sample_text)
-        print(f"\nPrediksi topik dari teks: \"{sample_text}\"\n")
 
         hasil_model_hybrid = self.hybrid_model.predict(
             [processed_sample_text])[0]
@@ -21,10 +20,9 @@ class NewsClassifier:
         hasil_deepseek = DeepSeekClassifier.classify(
             processed_sample_text, use_api=True)
 
-        print("Hybrid C5.0-KNN  :", hasil_model_hybrid)
-        print("DeepSeek         :", hasil_deepseek)
-
         return {
+            "text": sample_text,
+            "Preprocessed Text": processed_sample_text,
             "Hybrid C5.0-KNN": hasil_model_hybrid,
             "DeepSeek": hasil_deepseek
         }
@@ -35,7 +33,7 @@ if __name__ == "__main__":
     sys.path.append('./src')
 
     # Load model hybrid
-    hybrid_model = joblib.load('./src/models/saved/hybrid_model.joblib')
-    classifier = NewsClassifier(hybrid_model)
+    hybrid_model_path = './src/models/saved/hybrid_model.joblib'
+    classifier = NewsClassifier(hybrid_model_path)
     sample_text = input("Masukkan berita yang akan diklasifikasi: ")
     classifier.classify(sample_text)
