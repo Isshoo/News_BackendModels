@@ -8,3 +8,5 @@ dataset_bp.route("/upload", methods=["POST"]
                  )(dataset_controller.upload_dataset)
 dataset_bp.route("/data", methods=["GET"])(dataset_controller.get_dataset)
 dataset_bp.route("/total", methods=["GET"])(dataset_controller.get_total_data)
+dataset_bp.route("/topics", methods=["GET"]
+                 )(dataset_controller.get_topics_distribution)

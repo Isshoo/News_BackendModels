@@ -21,3 +21,5 @@ preprocess_bp.route(
 # Tambah data baru
 preprocess_bp.route(
     "/preprocessed/add", methods=["POST"])(preprocess_controller.add_data)
+preprocess_bp.route(
+    "/preprocessed/topics", methods=["GET"])(preprocess_controller.get_topics_distribution)

@@ -34,3 +34,14 @@ class DatasetService:
 
         df = pd.read_csv(self.DATASET_PATH, sep=";")
         return len(df)
+
+    def get_topics_distribution(self):
+        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
+        if not os.path.exists(self.DATASET_PATH):
+            return {}
+
+        df = pd.read_csv(self.DATASET_PATH, sep=";")
+        topic_counts = df["topik"].value_counts(
+        ).to_dict()  # Hitung jumlah setiap topik
+
+        return topic_counts

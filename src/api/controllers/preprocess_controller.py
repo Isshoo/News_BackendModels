@@ -66,3 +66,8 @@ class PreprocessController:
             return jsonify({"error": "Failed to add data"}), 400
 
         return jsonify({"message": "Data added successfully"})
+
+    def get_topics_distribution(self):
+        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
+        topics_distribution = self.preprocess_service.get_topics_distribution()
+        return jsonify({"topics_distribution": topics_distribution}), 200

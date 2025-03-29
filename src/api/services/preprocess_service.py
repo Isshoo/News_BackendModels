@@ -87,3 +87,14 @@ class PreprocessService:
         df.to_csv(self.PROCESSED_DATASET_PATH, index=False, sep=";")
 
         return True
+
+    def get_topics_distribution(self):
+        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
+        if not os.path.exists(self.PROCESSED_DATASET_PATH):
+            return {}
+
+        df = pd.read_csv(self.PROCESSED_DATASET_PATH, sep=";")
+        topic_counts = df["topik"].value_counts(
+        ).to_dict()  # Hitung jumlah setiap topik
+
+        return topic_counts

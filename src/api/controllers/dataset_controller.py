@@ -40,3 +40,8 @@ class DatasetController:
         """ Menghitung jumlah total data dalam dataset """
         total = self.dataset_service.count_dataset()
         return jsonify({"total_data": total}), 200
+
+    def get_topics_distribution(self):
+        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
+        topics_distribution = self.dataset_service.get_topics_distribution()
+        return jsonify({"topics_distribution": topics_distribution}), 200
