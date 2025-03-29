@@ -4,7 +4,7 @@ from src.preprocessing.extends.dataset_preprocessor import DatasetPreprocessor
 
 
 class DatasetService:
-    DATASET_PATH = "src/datasets/processed_dataset.csv"
+    DATASET_PATH = "src/datasets/raw_dataset.csv"
 
     def __init__(self):
         self.preprocessor = DatasetPreprocessor()
