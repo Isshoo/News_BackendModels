@@ -2,26 +2,38 @@ import numpy as np
 from collections import Counter
 
 
-class ManualKNN:
+class CustomKNN:
     def __init__(self, n_neighbors=5):
-        self.n_neighbors = n_neighbors
+        self.n = n_neighbors
+        self.X_train = None
+        self.y_train = None
 
     def fit(self, X_train, y_train):
-        self.X_train = X_train
+        """Menyimpan data latih KNN"""
+        self.X_train = X_train  # Konversi ke array numpy
         self.y_train = np.array(y_train)
 
-    def compute_euclidean_distance(self, vec1, vec2):
-        return np.linalg.norm(vec1 - vec2)
+    def euclidean_distance(self, vec1, vec2):
+        """Menghitung jarak Euclidean antara dua vektor"""
+        return np.sqrt(np.sum((vec1 - vec2) ** 2))
 
-    def predict(self, X_test_vector, relevant_labels):
-        relevant_indices = [i for i, label in enumerate(
-            self.y_train) if label in relevant_labels]
-        X_train_filtered = self.X_train[relevant_indices]
-        y_train_filtered = self.y_train[relevant_indices]
+    def predict(self, text_vector, candidate_labels):
+        """Klasifikasi dengan KNN menggunakan kandidat dari C5.0"""
+        if self.X_train is None or self.y_train is None:
+            raise ValueError(
+                "Model belum dilatih. Jalankan `fit()` terlebih dahulu.")
 
-        distances = [self.compute_euclidean_distance(
-            X_train_filtered[i], X_test_vector) for i in range(len(X_train_filtered))]
-        nearest_indices = np.argsort(distances)[:self.n_neighbors]
-        nearest_labels = y_train_filtered[nearest_indices]
+        distances = [
+            (i, self.euclidean_distance(text_vector, sample))
+            for i, sample in enumerate(self.X_train)
+        ]
 
-        return Counter(nearest_labels).most_common(1)[0][0]
+        distances.sort(key=lambda x: x[1])  # Urutkan berdasarkan jarak
+        nearest_labels = [self.y_train[i] for i, _ in distances[:self.n]]
+
+        # Pastikan hanya memilih label yang ada di kandidat
+        filtered_labels = [
+            label for label in nearest_labels if label in candidate_labels]
+
+        # Jika tidak ada kandidat yang cocok, pakai label mayoritas dari k tetangga
+        return Counter(filtered_labels).most_common(1)[0][0] if filtered_labels else Counter(nearest_labels).most_common(1)[0][0]

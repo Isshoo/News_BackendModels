@@ -4,9 +4,10 @@
 
 # Bytecode files
 __pycache__/
+cache
 
 # Dataset
-dataset/
+processed_dataset.csv
 
 # Model
 *.pkl

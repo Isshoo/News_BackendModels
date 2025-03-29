@@ -11,8 +11,7 @@ class NewsClassifier:
 
     def classify(self, sample_text):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
-        processed_sample_text = self.text_preprocessor.preprocess(
-            [sample_text])[0]
+        processed_sample_text = self.text_preprocessor.preprocess(sample_text)
         print(f"\nPrediksi topik dari teks: \"{sample_text}\"\n")
 
         hasil_model_hybrid = self.hybrid_model.predict(

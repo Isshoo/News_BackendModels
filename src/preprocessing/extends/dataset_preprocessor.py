@@ -6,6 +6,8 @@ class DatasetPreprocessor(Preprocessor):
     def preprocess(self, file_path, sep=";", encoding="utf-8"):
         """ Preprocessing dataset """
         df = pd.read_csv(file_path, sep=sep, encoding=encoding)
-        df.drop_duplicates(inplace=True)
+        # drop duplikat untuk contentSnippet
+        df.drop_duplicates(subset=["contentSnippet"], inplace=True)
+
         df.dropna(subset=["contentSnippet", "topik"], inplace=True)
         return df

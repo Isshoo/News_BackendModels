@@ -12,7 +12,7 @@ class PredictService:
 
     def predict(self, text):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
-        clean_text = self.text_preprocessor.preprocess([text])[0]
+        clean_text = self.text_preprocessor.preprocess(text)
 
         # Prediksi menggunakan Hybrid Model
         try:
