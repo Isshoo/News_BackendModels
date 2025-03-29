@@ -5,6 +5,14 @@ from collections import Counter
 class CustomC5:
     def __init__(self):
         self.topic_data = {}
+        self.entropy_overall = None
+
+    def compute_overall_entropy(self, y_train):
+        label_counts = Counter(y_train)
+        total_samples = len(y_train)
+        self.entropy_overall = -sum((count / total_samples) * np.log2(
+            count / total_samples) for count in label_counts.values())
+        return self.entropy_overall
 
     def fit(self, X_train, y_train):
         word_counts = {}
@@ -19,7 +27,7 @@ class CustomC5:
             self.topic_data[label] = {
                 'entropy': entropy, 'word_freq': word_freq}
 
-    def calculate_information_gain(self, text):
+    def compute_information_gain(self, text):
         gains = {}
         words = text.split()
         for label, data in self.topic_data.items():

@@ -1,40 +1,53 @@
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from src.preprocessing.preprocessor import Preprocessor
+from src.utilities.vectorizer import TextVectorizer
 from src.processing.algorithms.knn import ManualKNN
 from src.processing.algorithms.c5 import CustomC5
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
+from src.preprocessing.extends.dataset_preprocessor import DatasetPreprocessor
+from src.preprocessing.extends.text_preprocessor import TextPreprocessor
 
 
 class HybridClassifier:
     def __init__(self, n_neighbors=5):
+        self.vectorizer = TextVectorizer()
         self.c5 = CustomC5()
         self.knn = ManualKNN(n_neighbors)
-        self.vectorizer = None
 
     def fit(self, X_train, y_train):
+        X_train_vectors = self.vectorizer.fit_transform(X_train)
+        self.c5.compute_overall_entropy(y_train)
         self.c5.fit(X_train, y_train)
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        self.vectorizer = TfidfVectorizer()
-        self.knn.fit(X_train, y_train, self.vectorizer)
+        self.knn.fit(X_train_vectors, y_train)
 
     def predict(self, X_test):
         predictions = []
-        for text in X_test:
-            label, candidates = self.c5.calculate_information_gain(text)
+        X_test_vectors = self.vectorizer.transform(X_test)
+
+        for i, text in enumerate(X_test):
+            label, candidates = self.c5.compute_information_gain(text)
             if label is not None:
                 predictions.append(label)
             else:
                 predictions.append(self.knn.predict(
-                    text, [c[0] for c in candidates]))
+                    X_test_vectors[i], [c[0] for c in candidates]))
+
         return predictions
 
 
 if __name__ == "__main__":
-    # Load dataset
-    df = Preprocessor.preprocess_dataset(
+    dataset_preprocessor = DatasetPreprocessor()
+    text_preprocessor = TextPreprocessor()
+
+    # Memuat dataset
+    df = dataset_preprocessor.preprocess(
         "./src/datasets/dataset-berita-ppl.csv")
+
+    df["clean_text"] = text_preprocessor.preprocess(
+        df["contentSnippet"].tolist())
+
+    # Menghapus baris dengan teks kosong setelah preprocessing
+    df = df[df["clean_text"].str.strip() != ""]
 
     X_texts = df["clean_text"].tolist()
     y = df["topik"]
