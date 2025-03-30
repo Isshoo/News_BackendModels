@@ -22,8 +22,8 @@ class NewsClassifier:
 
         return {
             "text": sample_text,
-            "Preprocessed Text": processed_sample_text,
-            "Hybrid C5.0-KNN": hasil_model_hybrid,
+            "Preprocessed_Text": processed_sample_text,
+            "Hybrid_C5_KNN": hasil_model_hybrid,
             "DeepSeek": hasil_deepseek
         }
 
