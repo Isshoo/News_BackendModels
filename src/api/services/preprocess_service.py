@@ -28,7 +28,7 @@ class PreprocessService:
         end = start + limit
 
         return {
-            "data": df.iloc[start:end].to_dict(orient="records"),
+            "data": df.iloc[start:end].reset_index().to_dict(orient="records"),
             "total_pages": df.shape[0] // limit + 1,
             "current_page": page,
             "limit": limit,
