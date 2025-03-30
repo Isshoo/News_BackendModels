@@ -18,6 +18,10 @@ class DatasetController:
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
 
+        # Cek ekstensi file (harus .csv)
+        if not file.filename.lower().endswith('.csv'):
+            return jsonify({"error": "Only CSV files are allowed"}), 400
+
         filepath = os.path.join(self.UPLOAD_FOLDER, file.filename)
         file.save(filepath)
 
@@ -33,15 +37,7 @@ class DatasetController:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-        data = self.dataset_service.fetch_dataset(page, limit)
-        return jsonify({"data": data}), 200
+        result = self.dataset_service.fetch_dataset(
+            page, limit)
 
-    def get_total_data(self):
-        """ Menghitung jumlah total data dalam dataset """
-        total = self.dataset_service.count_dataset()
-        return jsonify({"total_data": total}), 200
-
-    def get_topics_distribution(self):
-        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
-        topics_distribution = self.dataset_service.get_topics_distribution()
-        return jsonify({"topics_distribution": topics_distribution}), 200
+        return jsonify(result)

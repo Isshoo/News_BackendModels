@@ -9,9 +9,6 @@ preprocess_bp.route(
 # Ambil dataset hasil preprocessing
 preprocess_bp.route(
     "/preprocessed/data", methods=["GET"])(preprocess_controller.get_preprocessed_dataset)
-# Total data yang sudah diproses
-preprocess_bp.route(
-    "/preprocessed/total", methods=["GET"])(preprocess_controller.get_total_preprocessed_data)
 # Ubah label manual
 preprocess_bp.route(
     "/preprocessed/update", methods=["PUT"])(preprocess_controller.update_label)
@@ -21,5 +18,3 @@ preprocess_bp.route(
 # Tambah data baru
 preprocess_bp.route(
     "/preprocessed/add", methods=["POST"])(preprocess_controller.add_data)
-preprocess_bp.route(
-    "/preprocessed/topics", methods=["GET"])(preprocess_controller.get_topics_distribution)

@@ -20,14 +20,9 @@ class PreprocessController:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-        data = self.preprocess_service.fetch_dataset(
+        result = self.preprocess_service.fetch_dataset(
             page, limit, processed=True)
-        return jsonify({"data": data})
-
-    def get_total_preprocessed_data(self):
-        """ Ambil total data dalam dataset yang sudah diproses """
-        total = self.preprocess_service.count_dataset(processed=True)
-        return jsonify({"total_data": total})
+        return jsonify(result)
 
     def update_label(self):
         """ Mengubah label manual dataset yang sudah diproses """
@@ -66,8 +61,3 @@ class PreprocessController:
             return jsonify({"error": "Failed to add data"}), 400
 
         return jsonify({"message": "Data added successfully"})
-
-    def get_topics_distribution(self):
-        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
-        topics_distribution = self.preprocess_service.get_topics_distribution()
-        return jsonify({"topics_distribution": topics_distribution}), 200

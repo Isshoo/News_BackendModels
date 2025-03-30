@@ -25,23 +25,11 @@ class DatasetService:
         start = (page - 1) * limit
         end = start + limit
 
-        return df.iloc[start:end].to_dict(orient="records")
-
-    def count_dataset(self):
-        """ Menghitung jumlah total data dalam dataset """
-        if not os.path.exists(self.DATASET_PATH):
-            return 0
-
-        df = pd.read_csv(self.DATASET_PATH, sep=";")
-        return len(df)
-
-    def get_topics_distribution(self):
-        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
-        if not os.path.exists(self.DATASET_PATH):
-            return {}
-
-        df = pd.read_csv(self.DATASET_PATH, sep=";")
-        topic_counts = df["topik"].value_counts(
-        ).to_dict()  # Hitung jumlah setiap topik
-
-        return topic_counts
+        return {
+            "data": df.iloc[start:end].to_dict(orient="records"),
+            "total_pages": df.shape[0] // limit + 1,
+            "current_page": page,
+            "limit": limit,
+            "total_data": df.shape[0],
+            "topic_counts": df["topik"].value_counts().to_dict(),
+        }

@@ -26,15 +26,15 @@ class PreprocessService:
         df = pd.read_csv(self.PROCESSED_DATASET_PATH, sep=";")
         start = (page - 1) * limit
         end = start + limit
-        return df[start:end].to_dict(orient="records")
 
-    def count_dataset(self, processed=False):
-        if not os.path.exists(self.PROCESSED_DATASET_PATH):
-            return 0
-
-        df = pd.read_csv(self.PROCESSED_DATASET_PATH, sep=";")
-        # ambil baris yang belum diubah label manual
-        return len(df)
+        return {
+            "data": df.iloc[start:end].to_dict(orient="records"),
+            "total_pages": df.shape[0] // limit + 1,
+            "current_page": page,
+            "limit": limit,
+            "total_data": df.shape[0],
+            "topic_counts": df["topik"].value_counts().to_dict(),
+        }
 
     def update_label(self, index, new_label):
         df = pd.read_csv(self.PROCESSED_DATASET_PATH, sep=";")
@@ -87,14 +87,3 @@ class PreprocessService:
         df.to_csv(self.PROCESSED_DATASET_PATH, index=False, sep=";")
 
         return True
-
-    def get_topics_distribution(self):
-        """ Mendapatkan daftar topik dan jumlahnya dalam dataset """
-        if not os.path.exists(self.PROCESSED_DATASET_PATH):
-            return {}
-
-        df = pd.read_csv(self.PROCESSED_DATASET_PATH, sep=";")
-        topic_counts = df["topik"].value_counts(
-        ).to_dict()  # Hitung jumlah setiap topik
-
-        return topic_counts
