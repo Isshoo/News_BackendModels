@@ -5,7 +5,7 @@ import joblib
 
 
 class NewsClassifier:
-    def __init__(self, hybrid_model_path='./src/models/saved/hybrid_model.joblib'):
+    def __init__(self, hybrid_model_path='./src/storage/models/base/hybrid_model.joblib'):
         self.hybrid_model = joblib.load(hybrid_model_path)
         self.text_preprocessor = TextPreprocessor()
 

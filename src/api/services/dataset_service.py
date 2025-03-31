@@ -29,7 +29,7 @@ class DatasetService:
         """ Melakukan preprocessing, menyimpan dataset, dan mencatat metadata """
         dataset_id = str(uuid.uuid4())
         processed_df = self.preprocessor.preprocess(filepath, sep=";")
-        dataset_path = os.path.join(self.DATASET_DIR, f"{dataset_id}.csv")
+        dataset_path = os.path.join(self.DATASET_DIR, f"{dataset_name}.csv")
         processed_df.to_csv(dataset_path, index=False, sep=";")
 
         metadata = self._load_metadata()
@@ -63,7 +63,7 @@ class DatasetService:
         end = start + limit
 
         return {
-            "data": df.iloc[start:end].reset_index(drop=True).to_dict(orient="records"),
+            "data": df.iloc[start:end].reset_index().to_dict(orient="records"),
             "total_pages": (len(df) + limit - 1) // limit,
             "current_page": page,
             "limit": limit,
