@@ -6,10 +6,12 @@
 __pycache__/
 cache
 
-# Dataset
-src/datasets/raw_dataset.csv
-src/datasets/processed_dataset.csv
-src/models/evaluations/model_evaluation.json
+
+src/storage/datasets/uploads/*
+src/storage/datasets/processed/*
+src/storage/metadatas/*
+src/storage/models/trained/*
+
 
 
 # Model
