@@ -1,4 +1,5 @@
 import os
+import json
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from src.processing.trainer import HybridModelTrainer
@@ -6,6 +7,7 @@ from src.processing.trainer import HybridModelTrainer
 
 class ProcessService:
     PROCESSED_DATASET_PATH = "src/datasets/processed_dataset.csv"
+    EVALUATION_PATH = "src/models/evaluations/model_evaluation.json"
 
     def __init__(self):
         self.trainer = HybridModelTrainer(self.PROCESSED_DATASET_PATH)
@@ -46,7 +48,23 @@ class ProcessService:
 
         results = self.trainer.train(n_neighbors, test_size)
 
-        return {
+        # Simpan hasil evaluasi ke file JSON
+        evaluation_data = {
             "message": "Model trained successfully",
             "evaluation": results
         }
+
+        with open(self.EVALUATION_PATH, "w") as f:
+            json.dump(evaluation_data, f, indent=4)
+
+        return evaluation_data
+
+    def model_evaluation(self):
+        """ Mengambil hasil evaluasi model yang telah disimpan """
+        if not os.path.exists(self.EVALUATION_PATH):
+            return {}
+
+        with open(self.EVALUATION_PATH, "r") as f:
+            evaluation_data = json.load(f)
+
+        return evaluation_data["evaluation"]

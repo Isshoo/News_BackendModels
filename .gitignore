@@ -9,6 +9,7 @@ cache
 # Dataset
 src/datasets/raw_dataset.csv
 src/datasets/processed_dataset.csv
+src/models/evaluations/model_evaluation.json
 
 
 # Model

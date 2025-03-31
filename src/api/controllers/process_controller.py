@@ -42,3 +42,11 @@ class ProcessController:
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    def model_evaluation(self):
+        try:
+            result = self.process_service.model_evaluation()
+            return jsonify(result)
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

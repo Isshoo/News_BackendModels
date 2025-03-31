@@ -8,3 +8,5 @@ process_bp.route("/process/split",
                  methods=["POST"])(process_controller.split_dataset)
 process_bp.route("/process/train",
                  methods=["POST"])(process_controller.train_model)
+process_bp.route("/process/evaluation",
+                 methods=["GET"])(process_controller.model_evaluation)
