@@ -46,6 +46,8 @@ class DatasetController:
 
     def get_dataset(self, dataset_id):
         """ Mengambil dataset tertentu dengan paginasi """
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
@@ -57,6 +59,8 @@ class DatasetController:
 
     def delete_dataset(self, dataset_id):
         """ Menghapus dataset tertentu """
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
         success = self.dataset_service.delete_dataset(dataset_id)
         if not success:
             return jsonify({"error": "Dataset not found"}), 404

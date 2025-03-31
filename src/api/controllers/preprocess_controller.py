@@ -1,62 +1,133 @@
 import os
 from flask import request, jsonify
 from src.api.services.preprocess_service import PreprocessService
+from src.api.services.dataset_service import DatasetService
 
 
 class PreprocessController:
     def __init__(self):
         self.preprocess_service = PreprocessService()
+        self.dataset_service = DatasetService()
 
-    def preprocess_dataset(self):
+    def preprocess_dataset(self, raw_dataset_id):
         """ Preprocessing dataset yang sudah diunggah """
-        success = self.preprocess_service.preprocess_dataset()
-        if not success:
-            return jsonify({"error": "No dataset available for preprocessing"}), 400
+        if not raw_dataset_id:
+            return jsonify({"error": "raw_dataset_id is required"}), 400
 
-        return jsonify({"message": "Dataset preprocessed successfully"})
+        datasets = self.dataset_service.fetch_datasets()
 
-    def get_preprocessed_dataset(self):
+        raw_dataset_path = next(
+            (d["path"] for d in datasets if d["id"] == raw_dataset_id), None)
+        if not raw_dataset_path:
+            return jsonify({"error": "Raw dataset not found"}), 404
+        raw_dataset_name = next(
+            (d["name"] for d in datasets if d["id"] == raw_dataset_id), None)
+
+        result = self.preprocess_service.preprocess_dataset(
+            raw_dataset_id, raw_dataset_path, raw_dataset_name
+        )
+        if not result:
+            return jsonify({"error": "Dataset preprocessing failed"}), 400
+
+        return jsonify({"message": "Dataset preprocessed successfully", "data": result})
+
+    def create_preprocessed_copy(self, raw_dataset_id):
+        """ Membuat salinan dataset yang sudah diproses """
+        if not raw_dataset_id:
+            return jsonify({"error": "raw_dataset_id is required"}), 400
+        data = request.json
+        if "name" not in data:
+            return jsonify({"error": "Invalid request"}), 400
+
+        name = data["name"]
+        result = self.preprocess_service.create_preprocessed_copy(
+            raw_dataset_id, name)
+        if not result:
+            return jsonify({"error": "Failed to create preprocessed copy"}), 400
+
+        return jsonify({"message": "Preprocessed copy created successfully", "data": result})
+
+    def fetch_preprocessed_datasets(self, raw_dataset_id):
         """ Ambil dataset yang sudah diproses """
+
+        if not raw_dataset_id:
+            return jsonify({"error": "raw_dataset_id is required"}), 400
+
+        result = self.preprocess_service.fetch_preprocessed_datasets(
+            raw_dataset_id)
+        return jsonify(result)
+
+    def fetch_preprocessed_dataset(self, dataset_id):
+        """ Mengambil dataset yang sudah diproses tertentu """
+
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-        result = self.preprocess_service.fetch_dataset(
-            page, limit, processed=True)
+        result = self.preprocess_service.fetch_preprocessed_dataset(
+            dataset_id, page, limit)
+        if not result:
+            return jsonify({"error": "Dataset not found"}), 404
+
         return jsonify(result)
 
-    def update_label(self):
+    def delete_preprocessed_dataset(self, dataset_id):
+        """ Menghapus dataset yang sudah diproses tertentu """
+
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
+        success = self.preprocess_service.delete_preprocessed_dataset(
+            dataset_id)
+        if not success:
+            return jsonify({"error": "Dataset not found"}), 404
+
+        return jsonify({"message": "Dataset deleted successfully"})
+
+    def update_label(self, dataset_id):
         """ Mengubah label manual dataset yang sudah diproses """
+
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
         data = request.json
         if "index" not in data or "topik" not in data:
             return jsonify({"error": "Invalid request"}), 400
 
         success = self.preprocess_service.update_label(
-            data["index"], data["topik"])
+            dataset_id, data["index"], data["topik"]
+        )
         if not success:
             return jsonify({"error": "Failed to update label"}), 400
 
         return jsonify({"message": "Label updated successfully"})
 
-    def delete_data(self):
+    def delete_data(self, dataset_id):
         """ Menghapus baris dataset yang sudah diproses """
+
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
         data = request.json
         if "index" not in data:
             return jsonify({"error": "Invalid request"}), 400
 
-        success = self.preprocess_service.delete_data(data["index"])
+        success = self.preprocess_service.delete_data(
+            dataset_id, data["index"])
         if not success:
             return jsonify({"error": "Failed to delete data"}), 400
 
         return jsonify({"message": "Data deleted successfully"})
 
-    def add_data(self):
+    def add_data(self, dataset_id):
         """ Menambahkan data baru ke dataset yang sudah diproses """
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
         data = request.json
         if "contentSnippet" not in data or "topik" not in data:
             return jsonify({"error": "Invalid request"}), 400
 
         success = self.preprocess_service.add_data(
-            data["contentSnippet"], data["topik"])
+            dataset_id, data["contentSnippet"], data["topik"]
+        )
         if not success:
             return jsonify({"error": "Failed to add data"}), 400
 
