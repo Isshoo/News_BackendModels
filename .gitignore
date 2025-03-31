@@ -8,6 +8,7 @@ cache
 
 
 src/storage/datasets/uploads/*
+src/storage/datasets/preprocessed/*
 src/storage/datasets/processed/*
 src/storage/metadatas/**
 src/storage/models/trained/*

@@ -40,6 +40,11 @@ class PreprocessController:
             return jsonify({"error": "Invalid request"}), 400
 
         name = data["name"]
+        preprocessed_datasets = self.preprocess_service.fetch_preprocessed_datasets(
+            raw_dataset_id)
+        if any(d["name"] == name for d in preprocessed_datasets):
+            return jsonify({"error": "Preprocessed copy name already exists"}), 400
+
         result = self.preprocess_service.create_preprocessed_copy(
             raw_dataset_id, name)
         if not result:
@@ -77,12 +82,10 @@ class PreprocessController:
 
         if dataset_id is None:
             return jsonify({"error": "dataset_id is required"}), 400
-        success = self.preprocess_service.delete_preprocessed_dataset(
+        result, status_code = self.preprocess_service.delete_preprocessed_dataset(
             dataset_id)
-        if not success:
-            return jsonify({"error": "Dataset not found"}), 404
 
-        return jsonify({"message": "Dataset deleted successfully"})
+        return jsonify(result), status_code
 
     def update_label(self, dataset_id):
         """ Mengubah label manual dataset yang sudah diproses """
@@ -93,13 +96,10 @@ class PreprocessController:
         if "index" not in data or "topik" not in data:
             return jsonify({"error": "Invalid request"}), 400
 
-        success = self.preprocess_service.update_label(
+        result, status_code = self.preprocess_service.update_label(
             dataset_id, data["index"], data["topik"]
         )
-        if not success:
-            return jsonify({"error": "Failed to update label"}), 400
-
-        return jsonify({"message": "Label updated successfully"})
+        return jsonify(result), status_code
 
     def delete_data(self, dataset_id):
         """ Menghapus baris dataset yang sudah diproses """
@@ -110,12 +110,9 @@ class PreprocessController:
         if "index" not in data:
             return jsonify({"error": "Invalid request"}), 400
 
-        success = self.preprocess_service.delete_data(
+        result, status_code = self.preprocess_service.delete_data(
             dataset_id, data["index"])
-        if not success:
-            return jsonify({"error": "Failed to delete data"}), 400
-
-        return jsonify({"message": "Data deleted successfully"})
+        return jsonify(result), status_code
 
     def add_data(self, dataset_id):
         """ Menambahkan data baru ke dataset yang sudah diproses """
@@ -125,10 +122,7 @@ class PreprocessController:
         if "contentSnippet" not in data or "topik" not in data:
             return jsonify({"error": "Invalid request"}), 400
 
-        success = self.preprocess_service.add_data(
+        result, status_code = self.preprocess_service.add_data(
             dataset_id, data["contentSnippet"], data["topik"]
         )
-        if not success:
-            return jsonify({"error": "Failed to add data"}), 400
-
-        return jsonify({"message": "Data added successfully"})
+        return jsonify(result), status_code

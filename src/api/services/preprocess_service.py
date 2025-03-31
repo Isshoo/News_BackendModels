@@ -8,11 +8,13 @@ from src.preprocessing.extends.text_preprocessor import TextPreprocessor
 
 
 class PreprocessService:
-    DATASET_DIR = "src/storage/datasets/uploads"
+    PREPROCESSED_DIR = "src/storage/datasets/preprocessed"
+    PROCESSED_DIR = "src/storage/datasets/processed"
     METADATA_FILE = "src/storage/metadatas/preprocessed_datasets.json"
 
     def __init__(self):
-        os.makedirs(self.DATASET_DIR, exist_ok=True)
+        os.makedirs(self.PREPROCESSED_DIR, exist_ok=True)
+        os.makedirs(self.PROCESSED_DIR, exist_ok=True)
         if not os.path.exists(self.METADATA_FILE):
             with open(self.METADATA_FILE, "w") as f:
                 json.dump([], f)
@@ -33,7 +35,7 @@ class PreprocessService:
 
         df = self.dataset_preprocessor.process(raw_dataset_path)
         processed_path = os.path.join(
-            self.DATASET_DIR, f"{raw_dataset_name}_original_preprocessed.csv")
+            self.PREPROCESSED_DIR, f"{raw_dataset_name}_original_preprocessed.csv")
         df.to_csv(processed_path, index=False, sep=";")
 
         metadata = self.load_metadata()
@@ -68,7 +70,7 @@ class PreprocessService:
 
         dataset_id = str(uuid.uuid4())
         copy_path = os.path.join(
-            self.DATASET_DIR, f"{raw_dataset_name}_{name}.csv")
+            self.PROCESSED_DIR, f"{raw_dataset_name}_{name}_processed.csv")
         df = pd.read_csv(default_entry["path"], sep=";")
         df.to_csv(copy_path, index=False, sep=";")
 
@@ -113,52 +115,73 @@ class PreprocessService:
 
     def delete_preprocessed_dataset(self, dataset_id):
         metadata = self.load_metadata()
-        entry = next(
-            (d for d in metadata if d["id"] == dataset_id and d["name"] != "default"), None)
-        if not entry:
-            return False
+        dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
-        os.remove(entry["path"])
+        if not dataset:
+            return {"message": "Preprocessed dataset not found", "error": True}, 404
+
+        if dataset["name"] == "default":
+            return {"message": "Default preprocessed dataset cannot be deleted", "error": True}, 403
+
+        os.remove(dataset["path"])
         metadata = [d for d in metadata if d["id"] != dataset_id]
         self.save_metadata(metadata)
-        return True
+
+        return {"message": "Preprocessed dataset deleted successfully"}, 200
 
     def update_label(self, dataset_id, index, new_label):
         metadata = self.load_metadata()
-        entry = next(
-            (d for d in metadata if d["id"] == dataset_id and d["name"] != "default"), None)
-        if not entry:
-            return False
+        dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
-        df = pd.read_csv(entry["path"], sep=";")
+        if not dataset:
+            return {"message": "Preprocessed dataset not found", "error": True}, 404
+
+        if dataset["name"] == "default":
+            return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
+
+        df = pd.read_csv(dataset["path"], sep=";")
         if index >= len(df):
-            return False
+            return {"message": "Data not found", "error": True}, 404
 
         df.at[index, "topik"] = new_label
-        return self.update_preprocessed_dataset(dataset_id, df)
+
+        result = self.update_preprocessed_dataset(dataset_id, df)
+
+        if not result:
+            return {"message": "Failed to update label", "error": True}, 500
+        return {"message": "Label updated successfully"}, 200
 
     def delete_data(self, dataset_id, index):
         metadata = self.load_metadata()
-        entry = next(
-            (d for d in metadata if d["id"] == dataset_id and d["name"] != "default"), None)
-        if not entry:
-            return False
+        dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
-        df = pd.read_csv(entry["path"], sep=";")
+        if not dataset:
+            return {"message": "Preprocessed dataset not found", "error": True}, 404
+
+        if dataset["name"] == "default":
+            return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
+
+        df = pd.read_csv(dataset["path"], sep=";")
         if index >= len(df):
-            return False
+            return {"message": "Data not found", "error": True}, 404
 
         df = df.drop(index).reset_index(drop=True)
-        return self.update_preprocessed_dataset(dataset_id, df)
+        result = self.update_preprocessed_dataset(dataset_id, df)
+        if not result:
+            return {"message": "Failed to delete data", "error": True}, 500
+        return {"message": "Data deleted successfully"}, 200
 
     def add_data(self, dataset_id, contentSnippet, topik):
         metadata = self.load_metadata()
-        entry = next(
-            (d for d in metadata if d["id"] == dataset_id and d["name"] != "default"), None)
-        if not entry:
-            return False
+        dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
-        df = pd.read_csv(entry["path"], sep=";")
+        if not dataset:
+            return {"message": "Preprocessed dataset not found", "error": True}, 404
+
+        if dataset["name"] == "default":
+            return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
+
+        df = pd.read_csv(dataset["path"], sep=";")
         preprocessedContent = self.text_preprocessor.preprocess(contentSnippet)
         new_data = pd.DataFrame({
             "contentSnippet": [contentSnippet],
@@ -167,22 +190,28 @@ class PreprocessService:
         })
 
         if df["contentSnippet"].isin(new_data["contentSnippet"]).any() or df["preprocessedContent"].isin(new_data["preprocessedContent"]).any():
-            return False
+            return {"message": "Data already exists", "error": True}, 409
 
         df = pd.concat([df, new_data], ignore_index=True)
-        return self.update_preprocessed_dataset(dataset_id, df)
+        result = self.update_preprocessed_dataset(dataset_id, df)
+        if not result:
+            return {"message": "Failed to add data", "error": True}, 500
+        return {"message": "Data added successfully"}, 201
 
     def update_preprocessed_dataset(self, dataset_id, df):
         metadata = self.load_metadata()
-        entry = next(
-            (d for d in metadata if d["id"] == dataset_id and d["name"] != "default"), None)
-        if not entry:
+        dataset = next((d for d in metadata if d["id"] == dataset_id), None)
+
+        if not dataset:
             return False
 
-        df.to_csv(entry["path"], index=False, sep=";")
-        entry["total_data"] = len(df)
-        entry["topic_counts"] = df["topik"].value_counts().to_dict()
-        entry["updated_at"] = datetime.now().isoformat()
+        if dataset["name"] == "default":
+            return False
+
+        df.to_csv(dataset["path"], index=False, sep=";")
+        dataset["total_data"] = len(df)
+        dataset["topic_counts"] = df["topik"].value_counts().to_dict()
+        dataset["updated_at"] = datetime.now().isoformat()
 
         self.save_metadata(metadata)
         return True

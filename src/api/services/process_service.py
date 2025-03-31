@@ -6,7 +6,7 @@ from src.processing.trainer import HybridModelTrainer
 
 
 class ProcessService:
-    PROCESSED_DATASET_PATH = "src/storage/datasets/processed/default.csv"
+    PROCESSED_DATASET_PATH = "src/storage/datasets/preprocessed/tes2_original_preprocessed.csv"
     EVALUATION_PATH = "src/storage/metadatas/models.json"
 
     def __init__(self):
