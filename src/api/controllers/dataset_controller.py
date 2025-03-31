@@ -4,8 +4,6 @@ from src.api.services.dataset_service import DatasetService
 
 
 class DatasetController:
-    UPLOAD_FOLDER = "src/datasets/"
-
     def __init__(self):
         self.dataset_service = DatasetService()
 
@@ -22,22 +20,45 @@ class DatasetController:
         if not file.filename.lower().endswith('.csv'):
             return jsonify({"error": "Only CSV files are allowed"}), 400
 
-        filepath = os.path.join(self.UPLOAD_FOLDER, file.filename)
+        dataset_name = os.path.splitext(file.filename)[0]
+
+        # Cek apakah dataset dengan nama yang sama sudah ada
+        existing_datasets = self.dataset_service.fetch_datasets()
+        if any(ds['name'] == dataset_name for ds in existing_datasets):
+            return jsonify({"error": "Dataset with the same name already exists"}), 400
+
+        filepath = os.path.join(
+            self.dataset_service.DATASET_DIR, file.filename)
         file.save(filepath)
 
-        processed_file = self.dataset_service.save_dataset(filepath)
+        dataset_info = self.dataset_service.save_dataset(
+            filepath, dataset_name)
 
         return jsonify({
             "message": "Dataset uploaded and processed successfully",
-            "file": processed_file
+            "dataset": dataset_info
         }), 200
 
-    def get_dataset(self):
-        """ Mengambil dataset dengan paginasi """
+    def get_datasets(self):
+        """ Mengambil semua dataset yang tersimpan """
+        datasets = self.dataset_service.fetch_datasets()
+        return jsonify(datasets), 200
+
+    def get_dataset(self, dataset_id):
+        """ Mengambil dataset tertentu dengan paginasi """
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-        result = self.dataset_service.fetch_dataset(
-            page, limit)
+        result = self.dataset_service.fetch_dataset(dataset_id, page, limit)
+        if result is None:
+            return jsonify({"error": "Dataset not found"}), 404
 
-        return jsonify(result)
+        return jsonify(result), 200
+
+    def delete_dataset(self, dataset_id):
+        """ Menghapus dataset tertentu """
+        success = self.dataset_service.delete_dataset(dataset_id)
+        if not success:
+            return jsonify({"error": "Dataset not found"}), 404
+
+        return jsonify({"message": "Dataset deleted successfully"}), 200
