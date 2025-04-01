@@ -13,11 +13,10 @@ class ProcessService:
     METADATA_PATH = "src/storage/metadatas/models.json"
 
     def __init__(self):
+        os.makedirs(self.STORAGE_PATH, exist_ok=True)
         if not os.path.exists(self.METADATA_PATH):
             with open(self.METADATA_PATH, "w") as f:
                 json.dump([], f)
-        if not os.path.exists(self.STORAGE_PATH):
-            os.makedirs(self.STORAGE_PATH)
 
     def load_metadata(self):
         with open(self.METADATA_PATH, "r") as f:
@@ -67,6 +66,7 @@ class ProcessService:
         joblib.dump(hybrid_model, model_path)  # Simpan model
 
         metadata = self.load_metadata()
+
         model_metadata = {
             "id": model_id,
             "name": name,

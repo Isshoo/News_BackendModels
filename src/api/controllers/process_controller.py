@@ -64,6 +64,10 @@ class ProcessController:
             if not preprocessed_dataset_path:
                 return jsonify({"error": "Preprocessed dataset not found"}), 404
 
+            # cek nama
+            if any(d["name"] == name for d in self.process_service.get_models()):
+                return jsonify({"error": "Model name already exists"}), 400
+
             model_metadata = self.process_service.train_model(
                 preprocessed_dataset_id, preprocessed_dataset_path, raw_dataset_id, name, n_neighbors, test_size
             )
@@ -94,8 +98,15 @@ class ProcessController:
             if "new_name" not in data:
                 return jsonify({"error": "Invalid request"}), 400
 
+            new_name = data["new_name"]
+            if not isinstance(new_name, str) or len(new_name) < 3:
+                return jsonify({"error": "New name must be a string with at least 3 characters"}), 400
+            # cek nama
+            if any(d["name"] == new_name for d in self.process_service.get_models() if d["id"] != model_id):
+                return jsonify({"error": "Model name already exists"}), 400
+
             success = self.process_service.edit_model_name(
-                model_id, data["new_name"])
+                model_id, new_name)
             if success:
                 return jsonify({"message": "Model name updated successfully"})
             return jsonify({"error": "Model not found"}), 404
