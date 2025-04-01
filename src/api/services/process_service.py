@@ -47,7 +47,7 @@ class ProcessService:
             "test_per_topic": y_test.value_counts().to_dict()
         }
 
-    def train_model(self, preprocessed_dataset_id, preprocessed_dataset_path, raw_dataset_id, name, n_neighbors, test_size):
+    def train_model(self, preprocessed_dataset_id, preprocessed_dataset_path, raw_dataset_id, name, n_neighbors, split_size):
         if not os.path.exists(preprocessed_dataset_path):
             return {}
 
@@ -57,9 +57,9 @@ class ProcessService:
 
         trainer = HybridModelTrainer(preprocessed_dataset_path)
         hybrid_model, evaluation_results = trainer.train(
-            n_neighbors, test_size)
+            n_neighbors, split_size)
         split_results = self.split_dataset(
-            preprocessed_dataset_path, test_size)
+            preprocessed_dataset_path, split_size)
 
         model_id = str(uuid.uuid4())
         model_path = os.path.join(self.STORAGE_PATH, f"{model_id}.joblib")
@@ -75,7 +75,7 @@ class ProcessService:
             "raw_dataset_id": raw_dataset_id,
             "total_data": len(df),
             "n_neighbors": n_neighbors,
-            "test_size": test_size,
+            "split_size": split_size,
             "train_size": split_results["train_size"],
             "test_size": split_results["test_size"],
             "train_per_topic": split_results["train_per_topic"],
