@@ -2,11 +2,11 @@ from src.features.classifier import NewsClassifier
 
 
 class PredictService:
-    def __init__(self):
-        self.classifier = NewsClassifier()
 
-    def predict(self, text):
+    def predict(self, text, model_path):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
-        result = self.classifier.classify(text)
+        classifier = NewsClassifier(model_path)
+
+        result = classifier.classify(text)
 
         return result

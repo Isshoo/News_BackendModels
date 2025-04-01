@@ -10,11 +10,12 @@ class PredictController:
         """ Menerima input teks dan mengembalikan hasil prediksi """
         try:
             data = request.json
-            if not data or "text" not in data:
-                return jsonify({"error": "No text provided"}), 400
+            if not data or "text" not in data or "model_path" not in data:
+                return jsonify({"error": "Invalid request"}), 400
 
             text = data["text"]
-            result = self.predict_service.predict(text)
+            model_path = data["model_path"]
+            result = self.predict_service.predict(text, model_path)
 
             return jsonify(result), 200
 
