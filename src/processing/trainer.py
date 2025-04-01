@@ -33,12 +33,9 @@ class HybridModelTrainer:
         y_pred = hybrid_model.predict(X_test)
 
         # Evaluasi model
-        evaluate_results = evaluate_model(y_test, y_pred)
+        evaluation_results = evaluate_model(y_test, y_pred)
 
-        # Simpan model
-        save_model(hybrid_model)
-
-        return evaluate_results
+        return hybrid_model, evaluation_results
 
 
 if __name__ == "__main__":

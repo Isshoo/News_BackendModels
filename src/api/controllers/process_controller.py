@@ -1,34 +1,52 @@
 from flask import request, jsonify
 from src.api.services.process_service import ProcessService
+from src.api.services.preprocess_service import PreprocessService
 
 
 class ProcessController:
     def __init__(self):
         self.process_service = ProcessService()
+        self.preprocess_service = PreprocessService()
 
-    def split_dataset(self):
+    def split_dataset(self, preprocessed_dataset_id):
         try:
             data = request.json
-            if "test_size" not in data:
+            if "test_size" not in data or "raw_dataset_id" not in data:
                 return jsonify({"error": "Invalid request"}), 400
 
             test_size = data["test_size"]
+            raw_dataset_id = data["raw_dataset_id"]
 
             if not isinstance(test_size, (int, float)) or test_size <= 0 or test_size >= 1:
                 return jsonify({"error": "Test size must be a positive float between 0 and 1"}), 400
 
-            result = self.process_service.split_dataset(test_size)
+            preprocessed_datasets = self.preprocess_service.fetch_preprocessed_datasets(
+                raw_dataset_id)
+            if not preprocessed_datasets:
+                return jsonify({"error": "No preprocessed datasets found"}), 404
+
+            preprocessed_dataset_path = next(
+                (d["path"] for d in preprocessed_datasets if d["id"] == preprocessed_dataset_id), None)
+            if not preprocessed_dataset_path:
+                return jsonify({"error": "Preprocessed dataset not found"}), 404
+
+            result = self.process_service.split_dataset(
+                preprocessed_dataset_path, test_size)
             return jsonify(result)
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    def train_model(self):
+    def train_model(self, preprocessed_dataset_id):
         try:
             data = request.json
-            if "test_size" not in data or "n_neighbors" not in data:
+            required_keys = ["raw_dataset_id",
+                             "name", "n_neighbors", "test_size"]
+            if not all(key in data for key in required_keys):
                 return jsonify({"error": "Invalid request"}), 400
 
+            raw_dataset_id = data["raw_dataset_id"]
+            name = data["name"]
             n_neighbors = data["n_neighbors"]
             test_size = data["test_size"]
 
@@ -37,16 +55,58 @@ class ProcessController:
             if not isinstance(test_size, (int, float)) or test_size <= 0 or test_size >= 1:
                 return jsonify({"error": "Test size must be a positive float between 0 and 1"}), 400
 
-            result = self.process_service.train_model(n_neighbors, test_size)
-            return jsonify(result)
+            preprocessed_datasets = self.preprocess_service.fetch_preprocessed_datasets(
+                raw_dataset_id)
+            if not preprocessed_datasets:
+                return jsonify({"error": "No preprocessed datasets found"}), 404
+            preprocessed_dataset_path = next(
+                (d["path"] for d in preprocessed_datasets if d["id"] == preprocessed_dataset_id), None)
+            if not preprocessed_dataset_path:
+                return jsonify({"error": "Preprocessed dataset not found"}), 404
+
+            model_metadata = self.process_service.train_model(
+                preprocessed_dataset_id, preprocessed_dataset_path, raw_dataset_id, name, n_neighbors, test_size
+            )
+            return jsonify(model_metadata)
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    def model_evaluation(self):
+    def get_models(self):
         try:
-            result = self.process_service.model_evaluation()
+            result = self.process_service.get_models()
             return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
+    def get_model(self, model_id):
+        try:
+            result = self.process_service.get_model(model_id)
+            if not result:
+                return jsonify({"error": "Model not found"}), 404
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    def edit_model_name(self, model_id):
+        try:
+            data = request.json
+            if "new_name" not in data:
+                return jsonify({"error": "Invalid request"}), 400
+
+            success = self.process_service.edit_model_name(
+                model_id, data["new_name"])
+            if success:
+                return jsonify({"message": "Model name updated successfully"})
+            return jsonify({"error": "Model not found"}), 404
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    def delete_model(self, model_id):
+        try:
+            success = self.process_service.delete_model(model_id)
+            if success:
+                return jsonify({"message": "Model deleted successfully"})
+            return jsonify({"error": "Model not found"}), 404
         except Exception as e:
             return jsonify({"error": str(e)}), 500
