@@ -1,10 +1,10 @@
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 import nltk
+import html
 import re
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from src.preprocessing.preprocessor import Preprocessor
 import ssl
-import nltk
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -32,18 +32,14 @@ class TextPreprocessor(Preprocessor):
 
         # Menghapus karakter non-UTF-8
         text = text.encode('utf-8', 'ignore').decode('utf-8')
-
-        # Menghapus tanda baca, angka, dan membersihkan teks
+        # Menghapus karakter HTML entities seperti amp;nbsp;
+        text = html.unescape(text)
         # Hanya menyisakan huruf, angka, dan tanda hubung (-)
-        text = re.sub(r"[^\w\s-]", "", text)
+        text = re.sub(r"&[a-z]+;", " ", text)
+        text = re.sub(r"[^\w\s-]", " ", text)
         text = re.sub(r"\d+", "", text)  # Menghapus angka
-        text = re.sub(r"\s+", " ", text).strip()  # Menghapus spasi berlebih
-        print(f"Cleansing: {text}")
-
-        # Menghapus kata berulang seperti "sering-sering" → "sering"
         text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
-
-        print(f"Penghapusan Kata Berulang: {text}")
+        print(f"Cleansing: {text}")
 
         # Tokenisasi
         tokens = nltk.word_tokenize(text)
