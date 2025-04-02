@@ -43,9 +43,12 @@ class DeepSeekClassifier:
 
         for _ in range(5):  # Maksimal 5 percobaan jika hasil tidak valid
             response = client.chat.completions.create(
-                model="deepseek/deepseek-r1-distill-llama-70b:free",
+                model="deepseek/deepseek-v3-base:free",
                 messages=[{"role": "user", "content": prompt}],
             )
+            if hasattr(response, "error"):
+                print(f"❌ Error dari API: {response.error}")
+                return "Error: Rate Limit Tercapai"
 
             response_text = response.choices[0].message.content.strip()
             response_text = re.sub(r"</?think>", "", response_text).strip()
