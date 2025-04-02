@@ -1,5 +1,6 @@
 import os
 import json
+import csv
 import uuid
 import pandas as pd
 from datetime import datetime
@@ -30,7 +31,8 @@ class DatasetService:
         dataset_id = str(uuid.uuid4())
         processed_df = self.preprocessor.preprocess(filepath, sep=",")
         dataset_path = os.path.join(self.DATASET_DIR, f"{dataset_name}.csv")
-        processed_df.to_csv(dataset_path, index=False, sep=",")
+        processed_df.to_csv(dataset_path, index=False, sep=",",
+                            quoting=csv.QUOTE_NONNUMERIC, encoding="utf-8")
 
         metadata = self._load_metadata()
         new_entry = {

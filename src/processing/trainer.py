@@ -6,15 +6,15 @@ from src.utilities.save_model import save_model
 
 
 class HybridModelTrainer:
-    def __init__(self, df,):
+    def __init__(self, dataset_path):
         """Inisialisasi trainer dengan dataset dalam bentuk DataFrame"""
 
-        self.df = pd.read_csv(df, sep=",", encoding="utf-8")
+        self.df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
 
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    def train(self, n_neighbors, test_size):
+    def train(self, n_neighbors=5, test_size=0.2):
         """Melatih model Hybrid C5.0-KNN"""
 
         X_texts = self.df["preprocessedContent"]
@@ -36,3 +36,9 @@ class HybridModelTrainer:
         evaluation_results = evaluate_model(y_test, y_pred)
 
         return hybrid_model, evaluation_results
+
+
+if __name__ == "__main__":
+    dataset_path = "./src/storage/datasets/base/news_dataset_preprocessed_default.csv"
+    trainer = HybridModelTrainer(dataset_path)
+    trainer.train()

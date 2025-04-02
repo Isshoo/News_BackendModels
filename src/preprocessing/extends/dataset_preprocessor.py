@@ -22,6 +22,9 @@ class DatasetPreprocessor(Preprocessor):
         df.drop_duplicates(subset=["contentSnippet"], inplace=True)
 
         df.dropna(subset=["contentSnippet", "topik"], inplace=True)
+
+        df['contentSnippet'] = df['contentSnippet'].str.replace('"', "'")
+
         return df
 
     def process(self, file_path, sep=",", encoding="utf-8"):

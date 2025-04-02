@@ -1,5 +1,6 @@
 import os
 import json
+import csv
 import uuid
 import pandas as pd
 from datetime import datetime
@@ -36,7 +37,8 @@ class PreprocessService:
         df = self.dataset_preprocessor.process(raw_dataset_path)
         processed_path = os.path.join(
             self.PREPROCESSED_DIR, f"{raw_dataset_name}_original_preprocessed.csv")
-        df.to_csv(processed_path, index=False, sep=",")
+        df.to_csv(processed_path, index=False,
+                  quoting=csv.QUOTE_NONNUMERIC, encoding="utf-8")
 
         metadata = self.load_metadata()
         new_entry = {
@@ -72,7 +74,8 @@ class PreprocessService:
         copy_path = os.path.join(
             self.PROCESSED_DIR, f"{raw_dataset_name}_{name}_processed.csv")
         df = pd.read_csv(default_entry["path"], sep=",")
-        df.to_csv(copy_path, index=False, sep=",")
+        df.to_csv(copy_path, index=False, sep=",",
+                  quoting=csv.QUOTE_NONNUMERIC, encoding="utf-8")
 
         metadata = self.load_metadata()
         new_entry = {
@@ -208,7 +211,8 @@ class PreprocessService:
         if dataset["name"] == "default":
             return False
 
-        df.to_csv(dataset["path"], index=False, sep=",")
+        df.to_csv(dataset["path"], index=False, sep=",",
+                  quoting=csv.QUOTE_NONNUMERIC, encoding="utf-8")
         dataset["total_data"] = len(df)
         dataset["topic_counts"] = df["topik"].value_counts().to_dict()
         dataset["updated_at"] = datetime.now().isoformat()
