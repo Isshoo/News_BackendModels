@@ -36,8 +36,9 @@ class TextPreprocessor(Preprocessor):
         text = html.unescape(text)
         # Hanya menyisakan huruf, angka, dan tanda hubung (-)
         text = re.sub(r"&[a-z]+;", " ", text)
-        text = re.sub(r"[^\w\s-]", " ", text)
-        text = re.sub(r"\d+", "", text)  # Menghapus angka
+        # Hapus angka kecuali dalam format "ke-24"
+        text = re.sub(r"\b(?!ke-\d+)\d+\b", "", text)
+        text = re.sub(r"[^\w\s]", " ", text)
         text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
         print(f"Cleansing: {text}")
 
@@ -45,9 +46,12 @@ class TextPreprocessor(Preprocessor):
         tokens = nltk.word_tokenize(text)
         print(f"Tokenization: {tokens}")
 
-        # Menghapus stopwords dan stemming
-        tokens = [self.stemmer.stem(word)
-                  for word in tokens if word not in self.stopwords]
+        # Menghapus stopwords
+        tokens = [token for token in tokens if token not in self.stopwords]
+        print(f"Stopwords Removal: {tokens}")
+
+        # Stemming
+        tokens = [self.stemmer.stem(token) for token in tokens]
         print(f"Stemming: {tokens}")
 
         # Kembalikan teks yang telah diproses
