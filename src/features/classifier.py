@@ -19,7 +19,7 @@ class NewsClassifier:
         self.valid_categories = {
             "Ekonomi", "Teknologi", "Olahraga", "Hiburan", "GayaHidup"}  # Kategori yang valid
 
-    def classify(self, sample_text, max_retries=5):
+    def classify(self, sample_text, max_retries=2):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
         processed_sample_text = self.text_preprocessor.preprocess(sample_text)
 

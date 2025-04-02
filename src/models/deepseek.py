@@ -41,7 +41,7 @@ class DeepSeekClassifier:
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1", api_key=api_key)
 
-        for _ in range(5):  # Maksimal 5 percobaan jika hasil tidak valid
+        for _ in range(3):  # Maksimal 5 percobaan jika hasil tidak valid
             response = client.chat.completions.create(
                 model="deepseek/deepseek-r1-distill-llama-70b:free",
                 messages=[{"role": "user", "content": prompt}],

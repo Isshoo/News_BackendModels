@@ -1,19 +1,41 @@
+import pickle
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 class TextVectorizer:
     def __init__(self):
+        # Initialize your vectorizer (like TfidfVectorizer)
         self.vectorizer = TfidfVectorizer()
 
     def fit_transform(self, corpus):
-        """Melatih vectorizer dan mengubah teks menjadi vektor"""
-        self.vectorizer.fit(corpus)
-        # Pastikan .toarray()
-        return self.vectorizer.transform(corpus).toarray()
+        """Transform the corpus into a matrix of TF-IDF features"""
+        # Ensure corpus is a pandas Series before checking for emptiness
+        if isinstance(corpus, pd.Series):
+            if corpus.empty:
+                raise ValueError("Corpus is empty. Please provide valid data.")
+        else:
+            raise TypeError("Expected input corpus to be a pandas Series.")
 
-    def transform(self, texts):
-        """Mengubah teks baru ke vektor dengan vectorizer yang sudah dilatih"""
-        if not hasattr(self.vectorizer, 'vocabulary_'):
-            raise ValueError(
-                "Vectorizer belum dilatih. Jalankan `fit_transform()` terlebih dahulu.")
-        return self.vectorizer.transform(texts).toarray()
+        # Perform vectorization (you can add additional checks or handling here)
+        return self.vectorizer.fit_transform(corpus)
+
+    def transform(self, corpus):
+        """Transform the corpus into a matrix of TF-IDF features"""
+        if isinstance(corpus, pd.Series):
+            if corpus.empty:
+                raise ValueError("Corpus is empty. Please provide valid data.")
+        else:
+            raise TypeError("Expected input corpus to be a pandas Series.")
+
+        return self.vectorizer.transform(corpus)
+
+    def save_vectorizer(self, path):
+        """Save the trained vectorizer to a file"""
+        with open(path, 'wb') as f:
+            pickle.dump(self.vectorizer, f)
+
+    def load_vectorizer(self, path):
+        """Load a previously saved vectorizer"""
+        with open(path, 'rb') as f:
+            self.vectorizer = pickle.load(f)

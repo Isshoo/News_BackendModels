@@ -14,7 +14,7 @@ class HybridModelTrainer:
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    def train(self, n_neighbors=5, test_size=0.2):
+    def train(self, n_neighbors=7, test_size=0.2):
         """Melatih model Hybrid C5.0-KNN"""
 
         X_texts = self.df["preprocessedContent"]
@@ -30,6 +30,7 @@ class HybridModelTrainer:
         hybrid_model.fit(X_train, y_train)
 
         # Prediksi hasil
+        X_test = pd.Series(X_test)
         y_pred = hybrid_model.predict(X_test)
 
         # Evaluasi model
@@ -39,6 +40,6 @@ class HybridModelTrainer:
 
 
 if __name__ == "__main__":
-    dataset_path = "./src/storage/datasets/base/news_dataset_preprocessed_default.csv"
+    dataset_path = "./src/storage/datasets/base/news_dataset_default_preprocessed_stopwords.csv"
     trainer = HybridModelTrainer(dataset_path)
     trainer.train()
