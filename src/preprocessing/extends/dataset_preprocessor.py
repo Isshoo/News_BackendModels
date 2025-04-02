@@ -7,7 +7,7 @@ class DatasetPreprocessor(Preprocessor):
     def __init__(self):
         self.text_preprocessor = TextPreprocessor()
 
-    def preprocess(self, file_path, sep=";", encoding="utf-8"):
+    def preprocess(self, file_path, sep=",", encoding="utf-8"):
         """ Preprocessing dataset """
         df = pd.read_csv(file_path, sep=sep, encoding=encoding)
         # drop duplikat untuk contentSnippet
@@ -16,7 +16,7 @@ class DatasetPreprocessor(Preprocessor):
         df.dropna(subset=["contentSnippet", "topik"], inplace=True)
         return df
 
-    def process(self, file_path, sep=";", encoding="utf-8"):
+    def process(self, file_path, sep=",", encoding="utf-8"):
         """ Preprocessing dataset """
         df = pd.read_csv(file_path, sep=sep, encoding=encoding)
 
@@ -25,3 +25,19 @@ class DatasetPreprocessor(Preprocessor):
             self.text_preprocessor.preprocess)
 
         return df
+
+    def raw_formatter(self, file_path="./src/storage/datasets/base/dataset-berita-ppl.xlsx"):
+        # Baca file Excel
+        df = pd.read_excel(file_path)
+
+        # Ganti tanda petik dua dalam kolom contentSnippet menjadi petik satu
+        df['contentSnippet'] = df['contentSnippet'].str.replace('"', "'")
+
+        # Simpan sebagai CSV dengan format yang benar
+        df.to_csv("./src/storage/datasets/base/dataset_default.csv", index=False,
+                  quoting=1, encoding="utf-8")
+
+
+if __name__ == "__main__":
+    preprocessor = DatasetPreprocessor()
+    preprocessor.raw_formatter()

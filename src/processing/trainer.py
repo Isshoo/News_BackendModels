@@ -9,7 +9,7 @@ class HybridModelTrainer:
     def __init__(self, df,):
         """Inisialisasi trainer dengan dataset dalam bentuk DataFrame"""
 
-        self.df = pd.read_csv(df, sep=";", encoding="utf-8")
+        self.df = pd.read_csv(df, sep=",", encoding="utf-8")
 
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
@@ -36,9 +36,3 @@ class HybridModelTrainer:
         evaluation_results = evaluate_model(y_test, y_pred)
 
         return hybrid_model, evaluation_results
-
-
-if __name__ == "__main__":
-    df = "./src/datasets/dataset-berita-ppl.csv"
-    trainer = HybridModelTrainer(df)
-    trainer.train()

@@ -36,7 +36,7 @@ class PreprocessService:
         df = self.dataset_preprocessor.process(raw_dataset_path)
         processed_path = os.path.join(
             self.PREPROCESSED_DIR, f"{raw_dataset_name}_original_preprocessed.csv")
-        df.to_csv(processed_path, index=False, sep=";")
+        df.to_csv(processed_path, index=False, sep=",")
 
         metadata = self.load_metadata()
         new_entry = {
@@ -71,8 +71,8 @@ class PreprocessService:
         dataset_id = str(uuid.uuid4())
         copy_path = os.path.join(
             self.PROCESSED_DIR, f"{raw_dataset_name}_{name}_processed.csv")
-        df = pd.read_csv(default_entry["path"], sep=";")
-        df.to_csv(copy_path, index=False, sep=";")
+        df = pd.read_csv(default_entry["path"], sep=",")
+        df.to_csv(copy_path, index=False, sep=",")
 
         metadata = self.load_metadata()
         new_entry = {
@@ -100,7 +100,7 @@ class PreprocessService:
         if not dataset_info:
             return None
 
-        df = pd.read_csv(dataset_info["path"], sep=";")
+        df = pd.read_csv(dataset_info["path"], sep=",")
         start = (page - 1) * limit
         end = start + limit
 
@@ -139,7 +139,7 @@ class PreprocessService:
         if dataset["name"] == "default":
             return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
 
-        df = pd.read_csv(dataset["path"], sep=";")
+        df = pd.read_csv(dataset["path"], sep=",")
         if index >= len(df):
             return {"message": "Data not found", "error": True}, 404
 
@@ -161,7 +161,7 @@ class PreprocessService:
         if dataset["name"] == "default":
             return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
 
-        df = pd.read_csv(dataset["path"], sep=";")
+        df = pd.read_csv(dataset["path"], sep=",")
         if index >= len(df):
             return {"message": "Data not found", "error": True}, 404
 
@@ -181,7 +181,7 @@ class PreprocessService:
         if dataset["name"] == "default":
             return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
 
-        df = pd.read_csv(dataset["path"], sep=";")
+        df = pd.read_csv(dataset["path"], sep=",")
         preprocessedContent = self.text_preprocessor.preprocess(contentSnippet)
         new_data = pd.DataFrame({
             "contentSnippet": [contentSnippet],
@@ -208,7 +208,7 @@ class PreprocessService:
         if dataset["name"] == "default":
             return False
 
-        df.to_csv(dataset["path"], index=False, sep=";")
+        df.to_csv(dataset["path"], index=False, sep=",")
         dataset["total_data"] = len(df)
         dataset["topic_counts"] = df["topik"].value_counts().to_dict()
         dataset["updated_at"] = datetime.now().isoformat()

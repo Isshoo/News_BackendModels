@@ -30,7 +30,7 @@ class ProcessService:
         if not os.path.exists(preprocessed_dataset_path):
             return {}
 
-        df = pd.read_csv(preprocessed_dataset_path, sep=";")
+        df = pd.read_csv(preprocessed_dataset_path, sep=",")
         if df.empty:
             return {}
 
@@ -51,7 +51,7 @@ class ProcessService:
         if not os.path.exists(preprocessed_dataset_path):
             return {}
 
-        df = pd.read_csv(preprocessed_dataset_path, sep=";")
+        df = pd.read_csv(preprocessed_dataset_path, sep=",")
         if df.empty:
             return {}
 

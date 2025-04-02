@@ -61,7 +61,7 @@ class NewsClassifier:
         """ Mengklasifikasikan CSV yang berisi berita """
         try:
             df = pd.read_csv(csv_file_path, encoding="utf-8",
-                             delimiter=";", on_bad_lines="skip")
+                             on_bad_lines="skip")
 
             # Pastikan kolom yang diperlukan ada
             required_columns = {"contentSnippet", "topik"}
@@ -97,15 +97,3 @@ class NewsClassifier:
             return {"error": "Encoding tidak valid. Coba simpan file sebagai UTF-8."}
         except Exception as e:
             return {"error": f"Kesalahan internal: {str(e)}"}
-
-
-if __name__ == "__main__":
-    import sys
-    sys.path.append('./src')
-
-    hybrid_model_path = './src/models/saved/hybrid_model.joblib'
-    classifier = NewsClassifier(hybrid_model_path)
-
-    sample_text = input("Masukkan berita yang akan diklasifikasi: ")
-    result = classifier.classify(sample_text)
-    print("🔹 Hasil Klasifikasi:", result)

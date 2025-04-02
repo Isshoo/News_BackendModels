@@ -28,9 +28,9 @@ class DatasetService:
     def save_dataset(self, filepath, dataset_name):
         """ Melakukan preprocessing, menyimpan dataset, dan mencatat metadata """
         dataset_id = str(uuid.uuid4())
-        processed_df = self.preprocessor.preprocess(filepath, sep=";")
+        processed_df = self.preprocessor.preprocess(filepath, sep=",")
         dataset_path = os.path.join(self.DATASET_DIR, f"{dataset_name}.csv")
-        processed_df.to_csv(dataset_path, index=False, sep=";")
+        processed_df.to_csv(dataset_path, index=False, sep=",")
 
         metadata = self._load_metadata()
         new_entry = {
@@ -58,7 +58,7 @@ class DatasetService:
         if not dataset_info:
             return None
 
-        df = pd.read_csv(dataset_info["path"], sep=";")
+        df = pd.read_csv(dataset_info["path"], sep=",")
         start = (page - 1) * limit
         end = start + limit
 
