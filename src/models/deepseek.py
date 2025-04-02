@@ -25,7 +25,10 @@ class DeepSeekClassifier:
         """ Menggunakan model lokal Ollama """
         response = ollama.chat(model='deepseek-r1:1.5b',
                                messages=[{"role": "user", "content": prompt}])
-        return response['message']['content'].strip().split("\n")[-1]
+
+        response_text = response["choices"][0]["message"]["content"].strip()
+        response_text = re.sub(r"</?think>", "", response_text).strip()
+        return response_text if response_text in VALID_CATEGORIES else "Unknown"
 
     @staticmethod
     def _classify_api(prompt):

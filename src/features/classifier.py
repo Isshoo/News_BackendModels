@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 from src.preprocessing.extends.text_preprocessor import TextPreprocessor
 from src.models.deepseek import DeepSeekClassifier
-from utilities.map_classification_result import map_classification_result
+from src.utilities.map_classification_result import map_classification_result
 
 
 class NewsClassifier:
