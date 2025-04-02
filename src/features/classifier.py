@@ -44,7 +44,7 @@ class NewsClassifier:
             "DeepSeek": hasil_deepseek
         }
 
-    def classify_with_retry(self, text, max_retries=5):
+    def classify_with_retry(self, text, max_retries=10):
         """ Coba klasifikasi DeepSeek beberapa kali jika gagal """
         for attempt in range(max_retries):
             hasil = self.classify(text)
