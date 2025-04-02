@@ -11,7 +11,6 @@ class NewsClassifier:
         """Inisialisasi model hybrid dan text preprocessor"""
         try:
             self.hybrid_model = joblib.load(hybrid_model_path)
-            print("✅ Hybrid model berhasil dimuat.")
         except Exception as e:
             print(f"❌ Gagal memuat Hybrid model: {e}")
             self.hybrid_model = None  # Hindari crash jika model tidak bisa dimuat
@@ -22,14 +21,13 @@ class NewsClassifier:
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
         processed_sample_text = self.text_preprocessor.preprocess(sample_text)
 
-        hasil_model_hybrid = "Unknown"
-        if self.hybrid_model:
-            try:
-                hasil_model_hybrid = self.hybrid_model.predict(
-                    [processed_sample_text])[0]
-                hasil_model_hybrid = map_hybrid_result(hasil_model_hybrid)
-            except Exception as e:
-                print(f"❌ Error pada model Hybrid: {e}")
+        try:
+            hasil_model_hybrid = self.hybrid_model.predict(
+                [processed_sample_text])[0]
+            hasil_model_hybrid = map_hybrid_result(hasil_model_hybrid)
+        except Exception as e:
+            print(f"❌ Error pada model Hybrid: {e}")
+            hasil_model_hybrid = "Unknown"
 
         try:
             hasil_deepseek = DeepSeekClassifier.classify(
