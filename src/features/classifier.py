@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 from src.preprocessing.extends.text_preprocessor import TextPreprocessor
 from src.models.deepseek import DeepSeekClassifier
-from src.utilities.map_hybrid_result import map_hybrid_result
+from utilities.map_classification_result import map_classification_result
 
 
 class NewsClassifier:
@@ -16,44 +16,44 @@ class NewsClassifier:
             self.hybrid_model = None  # Hindari crash jika model tidak bisa dimuat
 
         self.text_preprocessor = TextPreprocessor()
+        self.valid_categories = {
+            "Ekonomi", "Teknologi", "Olahraga", "Hiburan", "GayaHidup"}  # Kategori yang valid
 
-    def classify(self, sample_text):
+    def classify(self, sample_text, max_retries=5):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
         processed_sample_text = self.text_preprocessor.preprocess(sample_text)
 
         try:
             hasil_model_hybrid = self.hybrid_model.predict(
                 [processed_sample_text])[0]
-            hasil_model_hybrid = map_hybrid_result(hasil_model_hybrid)
+            hasil_model_hybrid = map_classification_result(hasil_model_hybrid)
         except Exception as e:
             print(f"❌ Error pada model Hybrid: {e}")
             hasil_model_hybrid = "Unknown"
 
-        try:
-            hasil_deepseek = DeepSeekClassifier.classify(
-                processed_sample_text, use_api=True)
-        except Exception as e:
-            print(f"❌ Error pada DeepSeek: {e}")
-            hasil_deepseek = "Unknown"
+        for attempt in range(max_retries):
+            try:
+                hasil_deepseek = DeepSeekClassifier.classify(
+                    processed_sample_text, use_api=True)
+                if hasil_deepseek in self.valid_categories:
+                    hasil_deepseek = map_classification_result(hasil_deepseek)
+                    return {
+                        "Preprocessed_Text": processed_sample_text,
+                        "Hybrid_C5_KNN": hasil_model_hybrid,
+                        "DeepSeek": hasil_deepseek
+                    }
+            except Exception as e:
+                print(f"❌ Error pada DeepSeek: {e}")
+
+            print(
+                f"🔄 DeepSeek gagal pada percobaan {attempt + 1}. Retrying...")
+            time.sleep(1)
 
         return {
             "Preprocessed_Text": processed_sample_text,
             "Hybrid_C5_KNN": hasil_model_hybrid,
-            "DeepSeek": hasil_deepseek
+            "DeepSeek": "Unknown"
         }
-
-    def classify_with_retry(self, text, max_retries=10):
-        """ Coba klasifikasi DeepSeek beberapa kali jika gagal """
-        for attempt in range(max_retries):
-            hasil = self.classify(text)
-            if hasil["DeepSeek"] != "Unknown":
-                return hasil["Preprocessed_Text"], hasil["Hybrid_C5_KNN"], hasil["DeepSeek"]
-
-            print(
-                f"🔄 DeepSeek gagal pada percobaan {attempt + 1}. Retrying...")
-            time.sleep(1)  # Delay sebelum mencoba ulang
-
-        return hasil["Preprocessed_Text"], hasil["Hybrid_C5_KNN"], "Unknown"
 
     def classify_csv(self, csv_file_path):
         """ Mengklasifikasikan CSV yang berisi berita """
@@ -75,10 +75,10 @@ class NewsClassifier:
 
             # Looping per baris untuk klasifikasi
             for text in df["contentSnippet"]:
-                preprocessed, hybrid, deepseek = self.classify_with_retry(text)
-                preprocessed_texts.append(preprocessed)
-                hybrid_results.append(hybrid)
-                deepseek_results.append(deepseek)
+                result = self.classify(text)
+                preprocessed_texts.append(result["Preprocessed_Text"])
+                hybrid_results.append(result["Hybrid_C5_KNN"])
+                deepseek_results.append(result["DeepSeek"])
 
             # Tambahkan hasil ke dataframe
             df["Preprocessed_Text"] = preprocessed_texts

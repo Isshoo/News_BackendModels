@@ -6,13 +6,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+VALID_CATEGORIES = {"Ekonomi", "Teknologi", "Olahraga", "Hiburan", "GayaHidup"}
 
 
 class DeepSeekClassifier:
 
     @staticmethod
     def classify(text, use_api=False):
-        prompt = f"Berdasarkan teks berita berbahasa indonesia berikut: {text}, kira-kira kategori apa yang paling sesuai untuk berita tersebut. pilih di antara Ekonomi, Teknologi, Olahraga, Hiburan, atau Gaya Hidup. Berikan jawaban hanya berupa satu kata kategori dari antara 5 kategori tersebut tanpa perlu diberikan penjelasan tambahan."
+        prompt = f"Berdasarkan teks berita berbahasa indonesia berikut: {text}, kira-kira kategori apa yang paling sesuai untuk berita tersebut. pilih di antara Ekonomi, Teknologi, Olahraga, Hiburan, atau GayaHidup. Berikan jawaban hanya berupa satu kata kategori dari antara 5 kategori tersebut tanpa perlu diberikan penjelasan tambahan."
 
         return (
             DeepSeekClassifier._classify_api(prompt) if use_api
@@ -28,24 +29,29 @@ class DeepSeekClassifier:
 
     @staticmethod
     def _classify_api(prompt):
-        """ Menggunakan OpenRouter API """
+        """ Menggunakan OpenRouter API untuk klasifikasi berita """
         api_key = DEEPSEEK_API_KEY
         if not api_key:
             raise ValueError(
                 "DeepSeek API Key tidak ditemukan. Pastikan sudah ada di .env")
 
-        client = OpenAI(base_url="https://openrouter.ai/api/v1",
-                        api_key=api_key)
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1", api_key=api_key)
 
-        response = client.chat.completions.create(
-            model="deepseek/deepseek-r1-distill-llama-70b:free",
-            messages=[{"role": "user", "content": prompt}],
-        )
+        for _ in range(5):  # Maksimal 5 percobaan jika hasil tidak valid
+            response = client.chat.completions.create(
+                model="deepseek/deepseek-r1-distill-llama-70b:free",
+                messages=[{"role": "user", "content": prompt}],
+            )
 
-        response_text = response.choices[0].message.content.strip()
-        # Hapus <think> dan </think>
-        response_text = re.sub(r"</?think>", "", response_text)
-        return response_text
+            response_text = response.choices[0].message.content.strip()
+            response_text = re.sub(r"</?think>", "", response_text).strip()
+
+            # Pastikan hanya mengembalikan kategori yang valid
+            if response_text in VALID_CATEGORIES:
+                return response_text
+
+        return "Unknown"
 
 
 if __name__ == "__main__":
