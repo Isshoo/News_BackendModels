@@ -1,17 +1,28 @@
 import pandas as pd
 import numpy as np
+import pickle
+import matplotlib.pyplot as plt
+import networkx as nx
 from collections import Counter
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from tqdm import tqdm  # Import tqdm
+
+
+class TreeNode:
+    def __init__(self, word=None, label=None):
+        self.word = word
+        self.label = label
+        self.children = {}
+
+    def is_leaf(self):
+        return self.label is not None
 
 
 class CustomC5:
     def __init__(self):
-        self.topic_data = {}
+        self.root = None
 
     def compute_entropy(self, labels):
         label_counts = Counter(labels)
@@ -19,179 +30,128 @@ class CustomC5:
         probs = np.array(list(label_counts.values())) / total_samples
         return -np.sum(probs * np.log2(probs)) if total_samples > 0 else 0
 
-    def compute_word_entropy(self, word, dataset, labels):
+    def compute_information_gain(self, word, dataset, labels):
+        H_S = self.compute_entropy(labels)
         word_occurrences = [labels[i]
                             for i, text in enumerate(dataset) if word in text.split()]
-        return self.compute_entropy(word_occurrences)
-
-    def compute_entropy_without_word(self, word, dataset, labels):
+        H_word = self.compute_entropy(word_occurrences)
         filtered_labels = [labels[i] for i, text in enumerate(
             dataset) if word not in text.split()]
-        return self.compute_entropy(filtered_labels)
-
-    def compute_information_gain(self, S, word, dataset, labels):
-        H_S = self.compute_entropy(labels)
-        H_word = self.compute_word_entropy(word, dataset, labels)
-        H_without_word = self.compute_entropy_without_word(
-            word, dataset, labels)
-
+        H_without_word = self.compute_entropy(filtered_labels)
         S_word = sum(1 for text in dataset if word in text.split())
         S_not_word = len(dataset) - S_word
+        return H_S - ((S_word / len(dataset)) * H_word + (S_not_word / len(dataset)) * H_without_word)
 
-        IG = H_S - ((S_word / len(dataset)) * H_word +
-                    (S_not_word / len(dataset)) * H_without_word)
-        return IG
+    def build_tree(self, dataset, labels):
+        unique_labels = set(labels)
+        if len(unique_labels) == 1:
+            return TreeNode(label=labels[0])
+
+        words = set(word for text in dataset for word in text.split())
+        if not words:
+            return TreeNode(label=Counter(labels).most_common(1)[0][0])
+
+        # Add tqdm for word iteration
+        gains = {}
+        for word in tqdm(words, desc="Evaluating words for splits", total=len(words)):
+            gains[word] = self.compute_information_gain(word, dataset, labels)
+
+        best_word = max(gains, key=gains.get)
+        if gains[best_word] == 0:
+            return TreeNode(label=Counter(labels).most_common(1)[0][0])
+
+        node = TreeNode(word=best_word)
+        dataset_with_word = [
+            text for text in dataset if best_word in text.split()]
+        labels_with_word = [labels[i] for i, text in enumerate(
+            dataset) if best_word in text.split()]
+        dataset_without_word = [
+            text for text in dataset if best_word not in text.split()]
+        labels_without_word = [labels[i] for i, text in enumerate(
+            dataset) if best_word not in text.split()]
+
+        node.children["with"] = self.build_tree(
+            dataset_with_word, labels_with_word)
+        node.children["without"] = self.build_tree(
+            dataset_without_word, labels_without_word)
+        return node
 
     def fit(self, X_train, y_train):
-        unique_labels, label_indices = np.unique(y_train, return_inverse=True)
-        word_counts = {label: Counter() for label in unique_labels}
+        self.root = self.build_tree(X_train, y_train)
 
-        for text, label_idx in zip(X_train, label_indices):
-            word_counts[unique_labels[label_idx]].update(text.split())
+    def predict_one(self, text, node):
+        if node.is_leaf():
+            return node.label
+        if node.word in text.split():
+            return self.predict_one(text, node.children["with"])
+        else:
+            return self.predict_one(text, node.children["without"])
 
-        self.topic_data = {
-            label: {
-                'entropy': self.compute_entropy(list(word_freq.elements())),
-                'word_freq': word_freq
-            }
-            for label, word_freq in word_counts.items()
-        }
+    def predict(self, X_test):
+        return [self.predict_one(text, self.root) for text in tqdm(X_test, desc="Making Predictions", total=len(X_test))]
 
-    def predict(self, text):
-        words = text.split()
-        gains = {}
+    def save_model(self, filepath="src/storage/models/algorithms/decision_tree_model.pkl"):
+        with open(filepath, "wb") as f:
+            pickle.dump(self, f)
 
-        for label, data in self.topic_data.items():
-            word_scores = [data['word_freq'].get(word, 0) for word in words]
-            avg_score = np.mean(word_scores) if word_scores else 0
-            gains[label] = avg_score
-
-        sorted_gains = sorted(gains.items(), key=lambda x: x[1], reverse=True)
-
-        total_gain = sum(gains.values()) if sum(
-            gains.values()) > 0 else 1  # Hindari pembagian dengan nol
-        confidence = sorted_gains[0][1] / total_gain  # Hitung confidence
-
-        if len(sorted_gains) > 1 and sorted_gains[0][1] == sorted_gains[1][1]:
-            return None, sorted_gains[:2]  # Butuh KNN
-        return sorted_gains[0][0], confidence  # Klasifikasi langsung
+    @staticmethod
+    def load_model(filepath="src/storage/models/algorithms/decision_tree_model.pkl"):
+        with open(filepath, "rb") as f:
+            return pickle.load(f)
 
 
-# CUSTOM C5
+def plot_tree_matplotlib(node, graph=None, parent_name=None):
+    if graph is None:
+        graph = nx.DiGraph()
+
+    node_name = node.label if node.is_leaf() else node.word
+    if parent_name:
+        graph.add_edge(parent_name, node_name)
+
+    for key, child in node.children.items():
+        plot_tree_matplotlib(child, graph, node_name)
+
+    return graph
+
+
+def draw_tree(graph):
+    pos = nx.spring_layout(graph, seed=42)
+    nx.draw(graph, pos, with_labels=True, node_size=3000, node_color='skyblue',
+            font_size=10, font_weight='bold', edge_color='gray')
+    plt.show()
+
+
 if __name__ == "__main__":
-    # Memuat dataset asli
     dataset_path = "./src/storage/datasets/base/news_dataset_default_preprocessed_stemmed.csv"
     df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
 
     if df.empty:
         raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    # Ambil fitur (preprocessedContent) dan label (topik) dari dataset
-    X_texts = df["preprocessedContent"].values  # Teks yang sudah diproses
-    y = df["topik"].values  # Label kategori
+    X_texts = df["preprocessedContent"].values
+    y = df["topik"].values
 
     le = LabelEncoder()
     y_encoded = le.fit_transform(y)
 
-    # Tentukan grid parameter untuk pencarian
-    param_grid = {
-        'test_size': [0.2, 0.3, 0.4],  # Pembagian data latih vs uji
-        # Nilai random_state yang berbeda
-        'random_state': [40, 42, 50, 100, 200]
-    }
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_texts, y_encoded, test_size=0.2, stratify=y_encoded, random_state=100
+    )
 
-    best_score = 0
-    best_params = {}
+    try:
+        c5 = CustomC5.load_model()
+        print("Model yang tersimpan berhasil dimuat!")
+    except FileNotFoundError:
+        print("Model tidak ditemukan, melatih ulang...")
+        c5 = CustomC5()
+        c5.fit(X_train, y_train)
+        c5.save_model()
 
-    # Lakukan pencarian grid untuk parameter terbaik
-    for test_size in param_grid['test_size']:
-        for random_state in param_grid['random_state']:
-            # Membagi data menjadi data latih dan data uji menggunakan train_test_split
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_texts, y_encoded, test_size=test_size, stratify=y_encoded, random_state=random_state
-            )
+    print("Mengevaluasi model...")
+    predictions = c5.predict(X_test)
+    accuracy = accuracy_score(y_test, predictions)
+    print(f"Akurasi model: {accuracy:.2%}")
 
-            # Inisialisasi dan latih model C5
-            c5 = CustomC5()
-            c5.fit(X_train, y_train)
-
-            # Prediksi untuk data uji
-            predictions = []
-            for text in X_test:
-                pred, _ = c5.predict(text)
-                if pred is None:
-                    # Ganti None dengan label yang lebih sering muncul (label terbanyak)
-                    pred = max(set(y_train), key=list(y_train).count)
-                predictions.append(pred)
-
-            # Akurasi (pastikan tidak ada None dalam prediksi)
-            predictions = [p for p in predictions if p is not None]
-            accuracy = accuracy_score(y_test[:len(predictions)], predictions)
-            print(
-                f"Akurasi model C5 dengan test_size={test_size} dan random_state={random_state}: {accuracy:.2%}")
-
-            # Simpan parameter terbaik
-            if accuracy > best_score:
-                best_score = accuracy
-                best_params = {'test_size': test_size,
-                               'random_state': random_state}
-
-    print(f"\nParameter terbaik ditemukan: {best_params}")
-    print(f"Akurasi terbaik: {best_score:.2%}")
-
-
-# LIBRARY C5
-# if __name__ == "__main__":
-#     # Memuat dataset asli
-#     dataset_path = "./src/storage/datasets/base/news_dataset_default_preprocessed_stemmed.csv"
-#     df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
-
-#     if df.empty:
-#         raise ValueError("Dataset kosong. Cek dataset Anda!")
-
-#     # Ambil fitur (preprocessedContent) dan label (topik) dari dataset
-#     X = df["preprocessedContent"].values  # Teks yang sudah diproses
-#     y = df["topik"].values  # Label kategori
-
-#     tfidf_vectorizer = TfidfVectorizer(max_features=1000)
-#     X_tfidf = tfidf_vectorizer.fit_transform(X)
-
-#     # Membagi data menjadi data latih dan uji
-#     X_train, X_test, y_train, y_test = train_test_split(
-#         X_tfidf, y, test_size=0.2, random_state=42)
-
-#     # Inisialisasi model DecisionTreeClassifier
-#     pipeline = Pipeline([
-#         ('c5', DecisionTreeClassifier())  # Model KNN
-#     ])
-
-#     # Menentukan parameter grid untuk GridSearchCV
-#     param_grid = {
-#         # Fungsi pembagian (gini atau entropy)
-#         'c5__criterion': ['gini', 'entropy'],
-#         'c5__max_depth': [None, 10, 20, 30],   # Kedalaman maksimum pohon
-#         # Jumlah minimum sampel untuk membagi simpul
-#         'c5__min_samples_split': [2, 10, 20],
-#         # Jumlah minimum sampel di simpul daun
-#         'c5__min_samples_leaf': [1, 5, 10]
-#     }
-
-#     # Melakukan GridSearchCV
-#     grid_search = GridSearchCV(pipeline, param_grid=param_grid,
-#                                cv=5, scoring='accuracy', n_jobs=-1, verbose=2)
-#     grid_search.fit(X_train, y_train)
-
-#     # Tampilkan parameter terbaik dari GridSearch
-#     print(f"Best parameters: {grid_search.best_params_}")
-
-#     # Gunakan model dengan parameter terbaik untuk prediksi
-#     best_dt_model = grid_search.best_estimator_
-
-#     # Prediksi untuk data uji
-#     predictions = best_dt_model.predict(X_test)
-
-#     # tree
-
-#     # Evaluasi model
-#     accuracy = accuracy_score(y_test, predictions)
-#     print(f'Akurasi model terbaik: {accuracy:.2%}')
+    print("Menyimpan visualisasi pohon keputusan...")
+    graph = plot_tree_matplotlib(c5.root)
+    draw_tree(graph)

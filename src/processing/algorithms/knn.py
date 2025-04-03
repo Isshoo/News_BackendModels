@@ -77,12 +77,12 @@ if __name__ == "__main__":
 
     # Menggunakan TextVectorizer untuk mengubah teks menjadi vektor
     # max_features menentukan jumlah fitur yang diambil
-    tfidf_vectorizer = TfidfVectorizer(max_features=1000)
+    tfidf_vectorizer = TfidfVectorizer(max_features=5000)
     X_tfidf = tfidf_vectorizer.fit_transform(X)
 
     # Membagi data menjadi data latih dan data uji menggunakan train_test_split
     X_train, X_test, y_train, y_test = train_test_split(
-        X_tfidf, y_encoded, test_size=0.2, stratify=y_encoded, random_state=40
+        X_tfidf, y_encoded, test_size=0.2, stratify=y_encoded, random_state=100
     )
 
     # Inisialisasi model KNeighborsClassifier
@@ -94,13 +94,13 @@ if __name__ == "__main__":
     param_grid = {
         'knn__n_neighbors': [3, 5, 7, 9, 11],              # Jumlah tetangga
         # Cara pemberian bobot kepada tetangga
-        'knn__weights': ['uniform', 'distance'],
+        'knn__weights': ['distance'],
         # Algoritma pencarian tetangga
-        'knn__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+        'knn__algorithm': ['auto'],
         # Ukuran daun untuk algoritma tree-based
-        'knn__leaf_size': [20, 30, 40],
+        'knn__leaf_size': [20],
         # Parameter untuk metric (p=1 adalah Manhattan, p=2 adalah Euclidean)
-        'knn__p': [1, 2]
+        'knn__p': [2]
     }
 
     # Melakukan GridSearchCV
