@@ -6,6 +6,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 
 class CustomKNN:
@@ -70,6 +72,9 @@ if __name__ == "__main__":
     X = df["preprocessedContent"].values  # Teks yang sudah diproses
     y = df["topik"].values  # Label kategori
 
+    le = LabelEncoder()
+    y_encoded = le.fit_transform(y)
+
     # Menggunakan TextVectorizer untuk mengubah teks menjadi vektor
     # max_features menentukan jumlah fitur yang diambil
     tfidf_vectorizer = TfidfVectorizer(max_features=1000)
@@ -77,27 +82,29 @@ if __name__ == "__main__":
 
     # Membagi data menjadi data latih dan data uji menggunakan train_test_split
     X_train, X_test, y_train, y_test = train_test_split(
-        X_tfidf, y, test_size=0.2, stratify=y, random_state=40
+        X_tfidf, y_encoded, test_size=0.2, stratify=y_encoded, random_state=40
     )
 
     # Inisialisasi model KNeighborsClassifier
-    knn_model = KNeighborsClassifier()
+    pipeline = Pipeline([
+        ('knn', KNeighborsClassifier())  # Model KNN
+    ])
 
     # Menentukan parameter grid untuk GridSearchCV
     param_grid = {
-        'n_neighbors': [3, 5, 7, 9, 11],              # Jumlah tetangga
+        'knn__n_neighbors': [3, 5, 7, 9, 11],              # Jumlah tetangga
         # Cara pemberian bobot kepada tetangga
-        'weights': ['uniform', 'distance'],
+        'knn__weights': ['uniform', 'distance'],
         # Algoritma pencarian tetangga
-        'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+        'knn__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
         # Ukuran daun untuk algoritma tree-based
-        'leaf_size': [20, 30, 40],
+        'knn__leaf_size': [20, 30, 40],
         # Parameter untuk metric (p=1 adalah Manhattan, p=2 adalah Euclidean)
-        'p': [1, 2]
+        'knn__p': [1, 2]
     }
 
     # Melakukan GridSearchCV
-    grid_search = GridSearchCV(estimator=knn_model, param_grid=param_grid,
+    grid_search = GridSearchCV(pipeline, param_grid=param_grid,
                                cv=5, scoring='accuracy', n_jobs=-1, verbose=2)
     grid_search.fit(X_train, y_train)
 
