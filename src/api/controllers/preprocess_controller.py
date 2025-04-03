@@ -2,12 +2,14 @@ import os
 from flask import request, jsonify
 from src.api.services.preprocess_service import PreprocessService
 from src.api.services.dataset_service import DatasetService
+from src.api.services.process_service import ProcessService
 
 
 class PreprocessController:
     def __init__(self):
         self.preprocess_service = PreprocessService()
         self.dataset_service = DatasetService()
+        self.process_service = ProcessService()
 
     def preprocess_dataset(self, raw_dataset_id):
         """ Preprocessing dataset yang sudah diunggah """
@@ -82,8 +84,27 @@ class PreprocessController:
 
         if dataset_id is None:
             return jsonify({"error": "dataset_id is required"}), 400
+
+        if not self.preprocess_service.fetch_preprocessed_dataset(dataset_id):
+            return jsonify({"error": "Dataset not found"}), 404
+
+        # jika id sama dengan dataset default maka tidak bisa dihapus
+        if dataset_id == "default-stemming":
+            return jsonify({"error": "Cannot delete default preprocessed dataset"}), 400
+
         result, status_code = self.preprocess_service.delete_preprocessed_dataset(
             dataset_id)
+
+        if status_code != 200:
+            return jsonify(result), status_code
+
+        # delete models for this preprocessed dataset
+        models = self.process_service.get_models()
+        for model in models:
+            if model["preprocessed_dataset_id"] == dataset_id:
+                resultMod = self.process_service.delete_model(model["id"])
+                if resultMod == False:
+                    return jsonify({"error": "Default model cannot be deleted"}), 404
 
         return jsonify(result), status_code
 

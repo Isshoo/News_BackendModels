@@ -107,6 +107,9 @@ class ProcessService:
         if not model_metadata:
             return False
 
+        if model_id == 'default-stemmed':
+            return False  # Default model cannot be deleted
+
         # Hapus file model jika ada
         model_path = model_metadata.get("model_path")
         if model_path and os.path.exists(model_path):

@@ -101,7 +101,7 @@ class PreprocessService:
         dataset_info = next(
             (d for d in metadata if d["id"] == dataset_id), None)
         if not dataset_info:
-            return None
+            return False
 
         df = pd.read_csv(dataset_info["path"], sep=",")
         start = (page - 1) * limit
@@ -116,12 +116,22 @@ class PreprocessService:
             "topic_counts": dataset_info["topic_counts"],
         }
 
-    def delete_preprocessed_dataset(self, dataset_id):
+    def delete_preprocessed_dataset(self, dataset_id, raw_dataset_id=''):
         metadata = self.load_metadata()
         dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
         if not dataset:
             return {"message": "Preprocessed dataset not found", "error": True}, 404
+
+        if dataset_id == 'default-stemming':
+            return False
+
+        # jika fungsi dipanggil dengan parameter raw_dataset_id maka langsung terhapus
+        if raw_dataset_id == dataset["raw_dataset_id"]:
+            os.remove(dataset["path"])
+            metadata = [d for d in metadata if d["id"] != dataset_id]
+            self.save_metadata(metadata)
+            return {"message": "Preprocessed dataset deleted successfully by Raw Dataset"}, 200
 
         if dataset["name"] == "default":
             return {"message": "Default preprocessed dataset cannot be deleted", "error": True}, 403

@@ -94,6 +94,9 @@ class ProcessController:
 
     def edit_model_name(self, model_id):
         try:
+            if model_id == 'default-stemmed':
+                return jsonify({"error": "Default model cannot be edited"}), 400
+
             data = request.json
             if "new_name" not in data:
                 return jsonify({"error": "Invalid request"}), 400
@@ -115,6 +118,9 @@ class ProcessController:
 
     def delete_model(self, model_id):
         try:
+            if model_id == 'default-stemmed':
+                return jsonify({"error": "Default model cannot be deleted"}), 400
+
             success = self.process_service.delete_model(model_id)
             if success:
                 return jsonify({"message": "Model deleted successfully"})

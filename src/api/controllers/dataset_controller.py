@@ -1,11 +1,15 @@
 import os
 from flask import request, jsonify
 from src.api.services.dataset_service import DatasetService
+from src.api.services.preprocess_service import PreprocessService
+from src.api.services.process_service import ProcessService
 
 
 class DatasetController:
     def __init__(self):
         self.dataset_service = DatasetService()
+        self.preprocess_service = PreprocessService()
+        self.process_service = ProcessService()
 
     def upload_dataset(self):
         """ Mengunggah dataset, menyimpannya, dan menjalankan preprocessing """
@@ -61,8 +65,35 @@ class DatasetController:
         """ Menghapus dataset tertentu """
         if dataset_id is None:
             return jsonify({"error": "dataset_id is required"}), 400
+
+        # cek apakah dataset ada
+        if not self.dataset_service.fetch_dataset(dataset_id):
+            return jsonify({"error": "Dataset not found"}), 404
+
+        # jika id sama dengan dataset default maka tidak bisa dihapus
+        if dataset_id == "default-stemming":
+            return jsonify({"error": "Cannot delete default dataset"}), 400
+
         success = self.dataset_service.delete_dataset(dataset_id)
         if not success:
             return jsonify({"error": "Dataset not found"}), 404
+
+        raw_dataset_id = dataset_id
+        # menghapus semua preprocessed datasets dari dataset ini
+        preprocessed_datasets = self.preprocess_service.fetch_preprocessed_datasets(
+            dataset_id)
+        for preprocessed_dataset in preprocessed_datasets:
+            resultPre = self.preprocess_service.delete_preprocessed_dataset(
+                self, preprocessed_dataset["id"], raw_dataset_id)
+            if resultPre == False:
+                return jsonify({"error": "Default preprocessed dataset cannot be deleted"}), 404
+
+        # menghapus semua models dari dataset ini
+        models = self.process_service.get_models()
+        for model in models:
+            if model["raw_dataset_id"] == raw_dataset_id:
+                resultMod = self.process_service.delete_model(model["id"])
+                if resultMod == False:
+                    return jsonify({"error": "Default model cannot be deleted"}), 404
 
         return jsonify({"message": "Dataset deleted successfully"}), 200
