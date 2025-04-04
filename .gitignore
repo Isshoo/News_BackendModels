@@ -7,6 +7,7 @@ __pycache__/
 cache
 
 
+src/storage/datasets/base/*
 src/storage/datasets/uploads/*
 src/storage/datasets/preprocessed/*
 src/storage/datasets/processed/*

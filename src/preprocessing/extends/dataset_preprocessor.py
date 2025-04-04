@@ -35,17 +35,21 @@ class DatasetPreprocessor(Preprocessor):
         df["preprocessedContent"] = df["contentSnippet"].apply(
             self.text_preprocessor.preprocess)
 
+        df.drop_duplicates(subset=["preprocessedContent"], inplace=True)
+
         return df
 
-    def raw_formatter(self, file_path="./src/storage/datasets/base/news_dataset_default.xlsx"):
+    def raw_formatter(self, file_path="./src/storage/datasets/base/raw_news_dataset.xlsx"):
         # Baca file Excel
         df = pd.read_excel(file_path)
 
         # Ganti tanda petik dua dalam kolom contentSnippet menjadi petik satu
         df['contentSnippet'] = df['contentSnippet'].str.replace('"', "'")
 
+        df.drop_duplicates(subset=["contentSnippet"], inplace=True)
+
         # Simpan sebagai CSV dengan format yang benar
-        df.to_csv("./src/storage/datasets/base/news_dataset_default.csv",
+        df.to_csv("./src/storage/datasets/base/raw_news_dataset.csv",
                   index=False, quoting=csv.QUOTE_NONNUMERIC, encoding="utf-8")
 
 

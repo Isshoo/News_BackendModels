@@ -5,6 +5,7 @@ from src.utilities.model_evaluations import evaluate_model
 from src.utilities.save_model import save_model
 from sklearn.preprocessing import LabelEncoder
 from itertools import product
+import time
 
 
 class HybridModelTrainer:
@@ -25,13 +26,9 @@ class HybridModelTrainer:
         le = LabelEncoder()
         y_encoded = le.fit_transform(y)
 
-        print(f"📊 Data size before split: {len(X_texts)}")
-
         X_train, X_test, y_train, y_test = train_test_split(
             X_texts, y_encoded, test_size=test_size, stratify=y_encoded, random_state=100
         )
-
-        print(f"📊 Train size: {len(X_train)}, Test size: {len(X_test)}")
 
         hybrid_model = HybridClassifier(n_neighbors, c5_threshold=0.4)
 
@@ -58,9 +55,9 @@ class HybridModelTrainer:
         # Default grid search parameters
         if param_grid is None:
             param_grid = {
-                "n_neighbors": [3, 5, 7, 9, 11],  # Coba beberapa nilai KNN
+                "n_neighbors": [3, 5, 7, 9],  # Coba beberapa nilai KNN
                 # Coba beberapa split train-test
-                "test_size": [0.2, 0.25, 0.3, 0.4],
+                "test_size": [0.2, 0.25, 0.3],
                 # Coba berbagai random state
                 "random_state": [4, 40, 42, 100],
                 # Coba beberapa split C5.0
@@ -89,7 +86,10 @@ class HybridModelTrainer:
 
             hybrid_model = HybridClassifier(
                 n_neighbors=n_neighbors, c5_threshold=c5_threshold)
+            # Latih model
+            start_time = time.time()
             hybrid_model.fit(X_train, y_train)
+            train_duration = time.time() - start_time
 
             # Prediksi hasil
             y_pred = hybrid_model.predict(X_test)
@@ -107,6 +107,7 @@ class HybridModelTrainer:
                     "test_size": test_size,
                     "random_state": random_state,
                     "c5_threshold": c5_threshold,
+                    "train_duration": train_duration,
                 },
                 "accuracy": accuracy
             })
@@ -119,26 +120,27 @@ class HybridModelTrainer:
                     "test_size": test_size,
                     "random_state": random_state,
                     "c5_threshold": c5_threshold,
+                    "train_duration": train_duration,
                 }
 
         # Urutkan hasil berdasarkan akurasi (tertinggi ke terendah)
         sorted_results = sorted(
             results, key=lambda x: x["accuracy"], reverse=True)
 
-        print("\nRank\tAccuracy\tTest Size\tN_Neighbors\tC5 Threshold\tRandom State")
-        print("----\t--------\t---------\t----------\t-----------\t------------")
+        print("\nRank\tAccuracy\tTest Size\tN_Neighbors\tC5 Threshold\tRandom State\tTrain Duration")
+        print(
+            "----\t--------\t---------\t----------\t-----------\t------------\t------------")
         for i, result in enumerate(sorted_results, 1):
-            model = result["model"]
             accuracy = result["accuracy"]
             params = result["params"]
             print(
-                f"{i}\t{accuracy:.4f}\t\t{params['test_size']}\t\t{params['n_neighbors']}\t\t{params['c5_threshold']}\t\t{params['random_state']}")
+                f"{i}\t{accuracy:.4f}\t\t{params['test_size']}\t\t{params['n_neighbors']}\t\t{params['c5_threshold']}\t\t{params['random_state']}\t\t{params['train_duration']:.2f}s")
 
         return best_model, best_params, best_score
 
 
 if __name__ == "__main__":
-    dataset_path = "./src/storage/datasets/base/news_dataset_default_preprocessed_stemmed.csv"
+    dataset_path = "./src/storage/datasets/base/raw_news_dataset_preprocessed_stemmed.csv"
     trainer = HybridModelTrainer(dataset_path)
 
     # # Training model secara manual
@@ -150,7 +152,7 @@ if __name__ == "__main__":
     print(f"Akurasi terbaik: {best_score:.4f}")
     isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
     if isSimpan.lower() == "y":
-        save_model(best_model, "./src/storage/models/hybrid_model_default.joblib")
+        save_model(best_model, "./src/storage/models/base/hybrid_model.joblib")
         print("Model hybrid disimpan sebagai default")
     else:
         print("Training Selesai")
