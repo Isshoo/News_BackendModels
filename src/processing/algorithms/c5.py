@@ -8,9 +8,11 @@ import time
 
 
 class CustomC5:
-    def __init__(self):
+    def __init__(self, min_df=5, max_df_ratio=0.8):
         self.topic_data = {}
         self.word_gains = {}
+        self.min_df = min_df
+        self.max_df_ratio = max_df_ratio
 
     def compute_entropy(self, labels):
         label_counts = Counter(labels)
@@ -24,8 +26,8 @@ class CustomC5:
         return self.compute_entropy(word_occurrences)
 
     def compute_entropy_without_word(self, word, text_sets, labels):
-        filtered_labels = [labels[i] for i, text_set in enumerate(
-            text_sets) if word not in text_set]
+        filtered_labels = [labels[i]
+                           for i, text_set in enumerate(text_sets) if word not in text_set]
         return self.compute_entropy(filtered_labels)
 
     def compute_information_gain(self, word, text_sets, labels, H_S):
@@ -44,12 +46,19 @@ class CustomC5:
     def fit(self, X_train, y_train):
         unique_labels, label_indices = np.unique(y_train, return_inverse=True)
         word_counts = {label: Counter() for label in unique_labels}
-        all_words = set()
         text_sets = [set(text.split()) for text in X_train]
 
+        # Hitung DF dan filter kata
+        doc_counts = Counter(word for text in text_sets for word in set(text))
+        total_docs = len(text_sets)
+        filtered_words = {
+            word for word, count in doc_counts.items()
+            if count >= self.min_df and count / total_docs <= self.max_df_ratio
+        }
+
         for text_set, label_idx in zip(text_sets, label_indices):
-            all_words.update(text_set)
-            word_counts[unique_labels[label_idx]].update(text_set)
+            filtered_text_set = text_set & filtered_words
+            word_counts[unique_labels[label_idx]].update(filtered_text_set)
 
         self.topic_data = {
             label: {
@@ -62,9 +71,8 @@ class CustomC5:
         H_S = self.compute_entropy(y_train)
 
         self.word_gains = {
-            word: self.compute_information_gain(
-                word, text_sets, y_train, H_S)
-            for word in all_words
+            word: self.compute_information_gain(word, text_sets, y_train, H_S)
+            for word in filtered_words
         }
 
     def predict(self, text):
@@ -72,28 +80,26 @@ class CustomC5:
         gains = {}
 
         for label, data in self.topic_data.items():
-            # Ganti skor dari frekuensi kata → skor berdasarkan information gain × frekuensi kata
             word_scores = [
                 data['word_freq'].get(word, 0) * self.word_gains.get(word, 0)
                 for word in words
             ]
-            avg_score = np.mean(word_scores) if word_scores else 0
-            gains[label] = avg_score
+            total_score = np.sum(word_scores)
+            gains[label] = total_score
 
         sorted_gains = sorted(gains.items(), key=lambda x: x[1], reverse=True)
-
         total_gain = sum(gains.values()) if sum(gains.values()) > 0 else 1
         confidence = sorted_gains[0][1] / total_gain
 
         if len(sorted_gains) > 1 and sorted_gains[0][1] == sorted_gains[1][1]:
             return None, sorted_gains[:2]  # Butuh KNN
-        return sorted_gains[0][0], confidence  # Klasifikasi langsung
+        return sorted_gains[0][0], confidence
 
 
 # CUSTOM C5
 if __name__ == "__main__":
     # Muat dataset
-    dataset_path = "./src/storage/datasets/base/news_dataset_default_preprocessed_stemmed.csv"
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_preprocessed_stemmed.csv"
     df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
 
     if df.empty:
@@ -108,8 +114,8 @@ if __name__ == "__main__":
 
     # Parameter grid
     param_grid = {
-        'test_size': [0.2, 0.25, 0.3, 0.4],
-        'random_state': [4, 40, 42, 100, 200]
+        'test_size': [0.2, 0.25],
+        'random_state': [42, 100]
     }
 
     grid = ParameterGrid(param_grid)

@@ -9,8 +9,8 @@ import pickle
 
 
 class HybridClassifier:
-    def __init__(self, n_neighbors=5, c5_threshold=0.4):
-        self.vectorizer = TfidfVectorizer()
+    def __init__(self, n_neighbors=11, c5_threshold=0.4, max_features=None):
+        self.vectorizer = TfidfVectorizer(max_features=max_features)
         self.c5 = CustomC5()
         self.knn = KNeighborsClassifier(
             n_neighbors=n_neighbors, p=2, weights='distance')

@@ -17,7 +17,7 @@ class HybridModelTrainer:
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    def train(self, n_neighbors=5, test_size=0.2):
+    def train(self, n_neighbors=11, c5_threshold=0.5, test_size=0.25, max_features=4750):
         """Melatih model Hybrid C5.0-KNN"""
 
         X_texts = self.df["preprocessedContent"].values
@@ -30,7 +30,8 @@ class HybridModelTrainer:
             X_texts, y_encoded, test_size=test_size, stratify=y_encoded, random_state=100
         )
 
-        hybrid_model = HybridClassifier(n_neighbors, c5_threshold=0.5)
+        hybrid_model = HybridClassifier(
+            n_neighbors, c5_threshold=c5_threshold, max_features=max_features)
 
         # Latih model
         hybrid_model.fit(X_train, y_train)
@@ -57,11 +58,13 @@ class HybridModelTrainer:
             param_grid = {
                 "n_neighbors": [3, 5, 7, 9, 11],  # Coba beberapa nilai KNN
                 # Coba beberapa split train-test
-                "test_size": [0.2, 0.25, 0.3, 0.4],
+                "test_size": [0.2, 0.25, 0.3],
                 # Coba berbagai random state
-                "random_state": [4, 40, 42, 100],
+                "random_state": [4, 42, 100],
                 # Coba beberapa split C5.0
-                "c5_threshold": [0.4, 0.5],
+                "c5_threshold": [0.3, 0.4, 0.5],
+                # Coba beberapa nilai maksimum fitur
+                "max_features": [3500, 4750, 5000, None]
             }
 
         best_score = 0
@@ -70,8 +73,8 @@ class HybridModelTrainer:
         results = []
 
         # Loop melalui semua kombinasi parameter
-        for n_neighbors, test_size, random_state, c5_threshold in product(
-            param_grid["n_neighbors"], param_grid["test_size"], param_grid["random_state"], param_grid["c5_threshold"]
+        for n_neighbors, test_size, random_state, c5_threshold, max_features in product(
+            param_grid["n_neighbors"], param_grid["test_size"], param_grid["random_state"], param_grid["c5_threshold"], param_grid["max_features"]
         ):
             print(
                 f"🔍 Evaluating Hybrid Model with n_neighbors={n_neighbors}, test_size={test_size}, random_state={random_state}, c5_threshold={c5_threshold}")
@@ -85,7 +88,7 @@ class HybridModelTrainer:
             print(f"�� Train size: {len(X_train)}, Test size: {len(X_test)}")
 
             hybrid_model = HybridClassifier(
-                n_neighbors=n_neighbors, c5_threshold=c5_threshold)
+                n_neighbors=n_neighbors, c5_threshold=c5_threshold, max_features=max_features)
             # Latih model
             start_time = time.time()
             hybrid_model.fit(X_train, y_train)
@@ -140,13 +143,14 @@ class HybridModelTrainer:
 
 
 if __name__ == "__main__":
-    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_for_stopwords_original_preprocessed.csv"
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_preprocessed_stemmed.csv"
     trainer = HybridModelTrainer(dataset_path)
 
     # # Training model secara manual
-    # trainer.train(n_neighbors=5, test_size=0.2)
+    # trainer.train(n_neighbors=11, test_size=0.25,
+    #               c5_threshold=0.5, max_features=None)
 
-    # # Training model dengan Grid Search
+    # Training model dengan Grid Search
     best_model, best_params, best_score = trainer.train_with_gridsearch()
     print(f"\nParameter terbaik ditemukan: {best_params}")
     print(f"Akurasi terbaik: {best_score:.4f}")

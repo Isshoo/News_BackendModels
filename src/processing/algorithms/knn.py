@@ -1,122 +1,175 @@
+import time
 import pandas as pd
 import numpy as np
-from collections import Counter
-from sklearn.preprocessing import StandardScaler
+from itertools import product
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import LabelEncoder
+from collections import defaultdict
 
 
 class CustomKNN:
-    def __init__(self, n_neighbors=5):
-        self.n_neighbors = n_neighbors
+    def __init__(self, n_neighbors=5, weights="distance", p=2, algorithm="auto"):
+        self.model = KNeighborsClassifier(
+            n_neighbors=n_neighbors,
+            weights=weights,
+            p=p,
+            algorithm=algorithm
+        )
+        self.distances_ = None
+        self.indices_ = None
         self.X_train = None
         self.y_train = None
-        self.scaler = StandardScaler(with_mean=False)
+        self.vectorizer = None
+        self.label_encoder = None
+        self.original_docs = None
 
-    def fit(self, X_train, y_train):
-        """Menyimpan data latih KNN dan melakukan normalisasi"""
-        self.X_train = X_train
-        self.y_train = np.array(y_train)
-        # Normalisasi fitur
-        self.X_train = self.scaler.fit_transform(self.X_train)
+    def fit(self, X, y, original_docs=None, vectorizer=None, label_encoder=None):
+        self.model.fit(X, y)
+        self.X_train = X
+        self.y_train = y
+        self.vectorizer = vectorizer
+        self.label_encoder = label_encoder
+        self.original_docs = original_docs
 
-    def euclidean_distance(self, vec1, vec2):
-        """Menghitung jarak Euclidean antara dua vektor"""
-        return np.sqrt(np.sum((vec1 - vec2) ** 2))
+    def predict(self, X):
+        distances, indices = self.model.kneighbors(X)
+        self.distances_ = distances
+        self.indices_ = indices
 
-    def predict(self, X_test, candidate_labels):
-        """Klasifikasi dengan KNN menggunakan kandidat dari C5.0"""
-        if self.X_train is None or self.y_train is None:
-            raise ValueError(
-                "Model belum dilatih. Jalankan `fit()` terlebih dahulu.")
+        predictions = []
+        for i, (dist, idx) in enumerate(zip(distances, indices)):
+            labels = self.y_train[idx]
+            label_weights = defaultdict(float)
+            for label, d in zip(labels, dist):
+                weight = 1 / d if d != 0 else 1e9
+                label_weights[label] += weight
 
-        # Normalisasi data uji menggunakan scaler yang sama yang digunakan pada X_train
-        X_test = self.scaler.transform(X_test)  # Transformasi data uji
+            max_weight = max(label_weights.values())
+            top_labels = [lbl for lbl, wt in label_weights.items()
+                          if wt == max_weight]
 
-        y_pred = []
-        for test_vector in X_test:
-            distances = [
-                (i, self.euclidean_distance(test_vector, sample))
-                for i, sample in enumerate(self.X_train)
-            ]
+            if len(top_labels) == 1:
+                predictions.append(top_labels[0])
+            else:
+                # === Custom tie-breaking ===
+                tfidf_means = {}
+                tfidf_totals = {}
+                word_counts = {}
+                doc_counts = {}
+                for label in top_labels:
+                    docs = [self.original_docs[j] for j in range(
+                        len(self.y_train)) if self.y_train[j] == label]
+                    tfidf_vectors = self.vectorizer.transform(docs)
 
-            distances.sort(key=lambda x: x[1])  # Urutkan berdasarkan jarak
-            nearest_labels = [self.y_train[i]
-                              for i, _ in distances[:self.n_neighbors]]
+                    tfidf_means[label] = tfidf_vectors.mean()
+                    tfidf_totals[label] = tfidf_vectors.sum()
+                    word_counts[label] = sum(len(doc.split()) for doc in docs)
+                    doc_counts[label] = len(docs)
 
-            # Pastikan hanya memilih label yang ada di kandidat
-            filtered_labels = [
-                label for label in nearest_labels if label in candidate_labels]
+                max_mean = max(tfidf_means.values())
+                top_mean = [
+                    lbl for lbl in top_labels if tfidf_means[lbl] == max_mean]
+                if len(top_mean) == 1:
+                    predictions.append(top_mean[0])
+                    continue
 
-            y_pred.append(
-                Counter(filtered_labels).most_common(1)[0][0] if filtered_labels else Counter(
-                    nearest_labels).most_common(1)[0][0]
-            )
+                max_total = max(tfidf_totals.values())
+                top_total = [
+                    lbl for lbl in top_mean if tfidf_totals[lbl] == max_total]
+                if len(top_total) == 1:
+                    predictions.append(top_total[0])
+                    continue
 
-        return np.array(y_pred)  # Mengembalikan array prediksi
+                max_words = max(word_counts.values())
+                top_words = [
+                    lbl for lbl in top_total if word_counts[lbl] == max_words]
+                if len(top_words) == 1:
+                    predictions.append(top_words[0])
+                    continue
+
+                max_docs = max(doc_counts.values())
+                top_docs = [
+                    lbl for lbl in top_words if doc_counts[lbl] == max_docs]
+                predictions.append(top_docs[0])
+
+        return np.array(predictions)
+
+    def score(self, X, y):
+        return self.model.score(X, y)
+
+    def get_distances(self):
+        return self.distances_
+
+    def get_indices(self):
+        return self.indices_
 
 
 if __name__ == "__main__":
-    # Membaca dataset dari file CSV
-    dataset_path = "./src/storage/datasets/base/news_dataset_default_preprocessed_stemmed.csv"
+    max_features_options = [3500, 4000, 4250, 4750, 5000, None]
+    test_size_options = [0.2, 0.25, 0.3]
+    random_state_options = [4, 42, 100]
+    n_neighbors_options = [3, 5, 7, 9, 11]
+
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_preprocessed_stemmed.csv"
     df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
 
     if df.empty:
         raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    # Ambil fitur (preprocessedContent) dan label (topik) dari dataset
-    X = df["preprocessedContent"].values  # Teks yang sudah diproses
-    y = df["topik"].values  # Label kategori
-
+    X_raw = df["preprocessedContent"].values
+    y_raw = df["topik"].values
     le = LabelEncoder()
-    y_encoded = le.fit_transform(y)
+    y_encoded = le.fit_transform(y_raw)
 
-    # Menggunakan TextVectorizer untuk mengubah teks menjadi vektor
-    # max_features menentukan jumlah fitur yang diambil
-    tfidf_vectorizer = TfidfVectorizer(max_features=5000)
-    X_tfidf = tfidf_vectorizer.fit_transform(X)
+    best_overall_accuracy = 0.0
+    best_overall_config = None
+    best_model = None
 
-    # Membagi data menjadi data latih dan data uji menggunakan train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_tfidf, y_encoded, test_size=0.2, stratify=y_encoded, random_state=100
-    )
+    start_time = time.time()
+    print("Mulai evaluasi...")
 
-    # Inisialisasi model KNeighborsClassifier
-    pipeline = Pipeline([
-        ('knn', KNeighborsClassifier())  # Model KNN
-    ])
+    for max_feat, test_sz, rand_st in product(max_features_options, test_size_options, random_state_options):
+        print(
+            f"\n🔍 Evaluasi: max_features={max_feat}, test_size={test_sz}, random_state={rand_st}")
 
-    # Menentukan parameter grid untuk GridSearchCV
-    param_grid = {
-        'knn__n_neighbors': [3, 5, 7, 9, 11],              # Jumlah tetangga
-        # Cara pemberian bobot kepada tetangga
-        'knn__weights': ['distance'],
-        # Algoritma pencarian tetangga
-        'knn__algorithm': ['auto'],
-        # Ukuran daun untuk algoritma tree-based
-        'knn__leaf_size': [20],
-        # Parameter untuk metric (p=1 adalah Manhattan, p=2 adalah Euclidean)
-        'knn__p': [2]
-    }
+        tfidf_vectorizer = TfidfVectorizer(max_features=max_feat)
+        X_tfidf = tfidf_vectorizer.fit_transform(X_raw)
 
-    # Melakukan GridSearchCV
-    grid_search = GridSearchCV(pipeline, param_grid=param_grid,
-                               cv=5, scoring='accuracy', n_jobs=-1, verbose=2)
-    grid_search.fit(X_train, y_train)
+        X_train, X_test, y_train, y_test, raw_train, raw_test = train_test_split(
+            X_tfidf, y_encoded, X_raw, test_size=test_sz, stratify=y_encoded, random_state=rand_st
+        )
 
-    # Tampilkan parameter terbaik dari GridSearch
-    print(f"Best parameters: {grid_search.best_params_}")
+        for n_neighbors in n_neighbors_options:
+            knn = CustomKNN(n_neighbors=n_neighbors,
+                            weights="distance", p=2, algorithm="auto")
+            knn.fit(X_train, y_train, original_docs=raw_train,
+                    vectorizer=tfidf_vectorizer, label_encoder=le)
+            predictions = knn.predict(X_test)
+            accuracy = accuracy_score(y_test, predictions)
 
-    # Gunakan model dengan parameter terbaik untuk prediksi
-    best_knn_model = grid_search.best_estimator_
+            print(
+                f"    → Akurasi: {accuracy:.2%} | n_neighbors={n_neighbors}, weights=distance, p=2")
 
-    # Prediksi untuk data uji
-    predictions = best_knn_model.predict(X_test)
+            if accuracy > best_overall_accuracy:
+                best_overall_accuracy = accuracy
+                best_overall_config = {
+                    "max_features": max_feat,
+                    "test_size": test_sz,
+                    "random_state": rand_st,
+                    "knn_params": {
+                        "n_neighbors": n_neighbors,
+                        "weights": "distance",
+                        "p": 2
+                    }
+                }
+                best_model = knn
 
-    # Evaluasi model
-    accuracy = accuracy_score(y_test, predictions)
-    print(f'Akurasi model terbaik: {accuracy:.2%}')
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"\nWaktu eksekusi: {elapsed_time:.2f} detik")
+    print("\n=== Model Terbaik Secara Keseluruhan ===")
+    print(f"Konfigurasi: {best_overall_config}")
+    print(f"Akurasi: {best_overall_accuracy:.2%}")
