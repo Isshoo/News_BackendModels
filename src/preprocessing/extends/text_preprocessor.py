@@ -65,11 +65,11 @@ class TextPreprocessor(Preprocessor):
         tokens = [token for token in tokens if token not in self.stopwords]
 
         # Stemming
-        # tokens = self.stemmer.stem(" ".join(tokens))
+        text = self.stemmer.stem(" ".join(tokens))
 
         # Kembalikan teks yang telah diproses
-        print(f"Text Setelah: {tokens}")
-        return tokens
+        print(f"Text Setelah: {text}")
+        return text
 
 
 if __name__ == "__main__":

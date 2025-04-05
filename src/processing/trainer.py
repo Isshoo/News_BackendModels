@@ -17,7 +17,7 @@ class HybridModelTrainer:
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    def train(self, n_neighbors=3, test_size=0.2):
+    def train(self, n_neighbors=5, test_size=0.2):
         """Melatih model Hybrid C5.0-KNN"""
 
         X_texts = self.df["preprocessedContent"].values
@@ -30,7 +30,7 @@ class HybridModelTrainer:
             X_texts, y_encoded, test_size=test_size, stratify=y_encoded, random_state=100
         )
 
-        hybrid_model = HybridClassifier(n_neighbors, c5_threshold=0.4)
+        hybrid_model = HybridClassifier(n_neighbors, c5_threshold=0.5)
 
         # Latih model
         hybrid_model.fit(X_train, y_train)
@@ -55,9 +55,9 @@ class HybridModelTrainer:
         # Default grid search parameters
         if param_grid is None:
             param_grid = {
-                "n_neighbors": [3, 5, 7, 9],  # Coba beberapa nilai KNN
+                "n_neighbors": [3, 5, 7, 9, 11],  # Coba beberapa nilai KNN
                 # Coba beberapa split train-test
-                "test_size": [0.2, 0.25, 0.3],
+                "test_size": [0.2, 0.25, 0.3, 0.4],
                 # Coba berbagai random state
                 "random_state": [4, 40, 42, 100],
                 # Coba beberapa split C5.0
@@ -140,7 +140,7 @@ class HybridModelTrainer:
 
 
 if __name__ == "__main__":
-    dataset_path = "./src/storage/datasets/base/raw_news_dataset_preprocessed_stemmed.csv"
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_for_stopwords_original_preprocessed.csv"
     trainer = HybridModelTrainer(dataset_path)
 
     # # Training model secara manual
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     print(f"Akurasi terbaik: {best_score:.4f}")
     isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
     if isSimpan.lower() == "y":
-        save_model(best_model, "./src/storage/models/base/hybrid_model.joblib")
+        save_model(best_model, "./src/storage/models/base/hybrid_model_2.joblib")
         print("Model hybrid disimpan sebagai default")
     else:
         print("Training Selesai")
