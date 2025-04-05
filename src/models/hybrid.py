@@ -9,17 +9,17 @@ import pickle
 
 
 class HybridClassifier:
-    def __init__(self, n_neighbors=11, c5_threshold=0.4, max_features=None):
+    def __init__(self, n_neighbors=11, c5_threshold=0.65, max_features=None):
         self.vectorizer = TfidfVectorizer(max_features=max_features)
         self.c5 = CustomC5()
-        self.knn = KNeighborsClassifier(
-            n_neighbors=n_neighbors, p=2, weights='distance')
+        self.knn = CustomKNN(
+            n_neighbors=n_neighbors, p=2, weights='distance', algorithm="auto")
         self.vectorizer_path = './src/storage/vectorizers/vectorizer.pkl'
         self.is_vectorizer_trained = False
         # Ambang batas untuk memutuskan kapan menggunakan KNN
         self.c5_threshold = c5_threshold
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, raw_train, le):
         """Melatih C5.0 dan KNN dengan TF-IDF"""
         X_train_vectors = self.vectorizer.fit_transform(X_train)
 
@@ -30,7 +30,8 @@ class HybridClassifier:
         self.is_vectorizer_trained = True  # Tandai vectorizer telah dilatih
 
         self.c5.fit(X_train, y_train)
-        self.knn.fit(X_train_vectors, y_train)
+        self.knn.fit(X_train_vectors, y_train,
+                     original_docs=raw_train, vectorizer=self.vectorizer, label_encoder=le)
 
     def predict(self, X_test):
         """Memprediksi kategori berdasarkan model Hybrid C5.0-KNN"""

@@ -17,7 +17,7 @@ class HybridModelTrainer:
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    def train(self, n_neighbors=11, c5_threshold=0.5, test_size=0.25, max_features=4750):
+    def train(self, n_neighbors=11, test_size=0.25, c5_threshold=0.65, max_features=None):
         """Melatih model Hybrid C5.0-KNN"""
 
         X_texts = self.df["preprocessedContent"].values
@@ -26,15 +26,15 @@ class HybridModelTrainer:
         le = LabelEncoder()
         y_encoded = le.fit_transform(y)
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_texts, y_encoded, test_size=test_size, stratify=y_encoded, random_state=100
+        X_train, X_test, y_train, y_test, raw_train, raw_test = train_test_split(
+            X_texts, y_encoded, X_texts, test_size=test_size, stratify=y_encoded, random_state=100
         )
 
         hybrid_model = HybridClassifier(
             n_neighbors, c5_threshold=c5_threshold, max_features=max_features)
 
         # Latih model
-        hybrid_model.fit(X_train, y_train)
+        hybrid_model.fit(X_train, y_train, raw_train, le)
 
         # Prediksi hasil
         y_pred = hybrid_model.predict(X_test)
@@ -56,15 +56,15 @@ class HybridModelTrainer:
         # Default grid search parameters
         if param_grid is None:
             param_grid = {
-                "n_neighbors": [3, 5, 7, 9, 11],  # Coba beberapa nilai KNN
+                "n_neighbors": [5, 7, 9, 11],  # Coba beberapa nilai KNN
                 # Coba beberapa split train-test
-                "test_size": [0.2, 0.25, 0.3],
+                "test_size": [0.2, 0.25],
                 # Coba berbagai random state
-                "random_state": [4, 42, 100],
+                "random_state": [42, 100],
                 # Coba beberapa split C5.0
-                "c5_threshold": [0.3, 0.4, 0.5],
+                "c5_threshold": [0.4, 0.5, 0.65],
                 # Coba beberapa nilai maksimum fitur
-                "max_features": [3500, 4750, 5000, None]
+                "max_features": [5000, 6000, None]
             }
 
         best_score = 0
@@ -81,8 +81,8 @@ class HybridModelTrainer:
 
             print(f"📊 Data size before split: {len(X_texts)}")
 
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_texts, y_encoded, test_size=test_size, stratify=y_encoded, random_state=random_state
+            X_train, X_test, y_train, y_test, raw_train, raw_test = train_test_split(
+                X_texts, y_encoded, X_texts, test_size=test_size, stratify=y_encoded, random_state=random_state
             )
 
             print(f"�� Train size: {len(X_train)}, Test size: {len(X_test)}")
@@ -91,7 +91,7 @@ class HybridModelTrainer:
                 n_neighbors=n_neighbors, c5_threshold=c5_threshold, max_features=max_features)
             # Latih model
             start_time = time.time()
-            hybrid_model.fit(X_train, y_train)
+            hybrid_model.fit(X_train, y_train, raw_train, le)
             train_duration = time.time() - start_time
 
             # Prediksi hasil
@@ -111,6 +111,7 @@ class HybridModelTrainer:
                     "random_state": random_state,
                     "c5_threshold": c5_threshold,
                     "train_duration": train_duration,
+                    "max_features": max_features
                 },
                 "accuracy": accuracy
             })
@@ -124,20 +125,21 @@ class HybridModelTrainer:
                     "random_state": random_state,
                     "c5_threshold": c5_threshold,
                     "train_duration": train_duration,
+                    "max_features": max_features
                 }
 
         # Urutkan hasil berdasarkan akurasi (tertinggi ke terendah)
         sorted_results = sorted(
             results, key=lambda x: x["accuracy"], reverse=True)
 
-        print("\nRank\tAccuracy\tTest Size\tN_Neighbors\tC5 Threshold\tRandom State\tTrain Duration")
+        print("\nRank\tAccuracy\tTest Size\tN_Neighbors\tC5 Threshold\tRandom State\tTrain Duration\tMax Features")
         print(
-            "----\t--------\t---------\t----------\t-----------\t------------\t------------")
+            "----\t--------\t---------\t----------\t-----------\t------------\t------------\t-------------")
         for i, result in enumerate(sorted_results, 1):
             accuracy = result["accuracy"]
             params = result["params"]
             print(
-                f"{i}\t{accuracy:.4f}\t\t{params['test_size']}\t\t{params['n_neighbors']}\t\t{params['c5_threshold']}\t\t{params['random_state']}\t\t{params['train_duration']:.2f}s")
+                f"{i}\t{accuracy:.4f}\t\t{params['test_size']}\t\t{params['n_neighbors']}\t\t{params['c5_threshold']}\t\t{params['random_state']}\t\t{params['train_duration']:.2f}s\t\t{params['max_features']}")
 
         return best_model, best_params, best_score
 
@@ -156,7 +158,7 @@ if __name__ == "__main__":
     print(f"Akurasi terbaik: {best_score:.4f}")
     isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
     if isSimpan.lower() == "y":
-        save_model(best_model, "./src/storage/models/base/hybrid_model_2.joblib")
+        save_model(best_model, "./src/storage/models/base/hybrid_model_0.joblib")
         print("Model hybrid disimpan sebagai default")
     else:
         print("Training Selesai")
