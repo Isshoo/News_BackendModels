@@ -24,7 +24,7 @@ class DatasetController:
         if not file.filename.lower().endswith('.csv'):
             return jsonify({"error": "Only CSV files are allowed"}), 400
 
-        dataset_name = os.path.splitext(file.filename)[0]
+        dataset_name = os.path.splitext(file.filename)[0].lower()
 
         # Cek apakah dataset dengan nama yang sama sudah ada
         existing_datasets = self.dataset_service.fetch_datasets()
@@ -84,7 +84,7 @@ class DatasetController:
             dataset_id)
         for preprocessed_dataset in preprocessed_datasets:
             resultPre = self.preprocess_service.delete_preprocessed_dataset(
-                self, preprocessed_dataset["id"], raw_dataset_id)
+                preprocessed_dataset["id"], raw_dataset_id)
             if resultPre == False:
                 return jsonify({"error": "Default preprocessed dataset cannot be deleted"}), 404
 
