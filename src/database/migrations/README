@@ -1,0 +1,7 @@
+Generic single-database configuration.
+
+jika terjadi perubahan gunakan pada database:
+alembic revision --autogenerate -m "perubahan"
+
+untuk apply perubahan ke database:
+alembic upgrade head
