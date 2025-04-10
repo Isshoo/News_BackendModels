@@ -39,6 +39,9 @@ class HybridModelTrainer:
         word_stats_df = hybrid_model.get_word_stats()
         print(word_stats_df.head())
 
+        tfidf_stats = hybrid_model.get_tfidf_word_stats(X_train)
+        print(tfidf_stats.head())
+
         # Prediksi hasil
         y_pred = hybrid_model.predict(X_test)
 

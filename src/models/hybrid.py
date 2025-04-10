@@ -59,3 +59,35 @@ class HybridClassifier:
     def get_word_stats(self):
         """Mengembalikan dataframe statistik kata dari model C5"""
         return pd.DataFrame(self.c5.word_stats)
+
+    def get_tfidf_word_stats(self, X_docs):
+        if not self.is_vectorizer_trained:
+            with open(self.vectorizer_path, 'rb') as f:
+                self.vectorizer = pickle.load(f)
+
+        tfidf_matrix = self.vectorizer.transform(X_docs)
+        feature_names = self.vectorizer.get_feature_names_out()
+        idf_values = self.vectorizer.idf_
+
+        tfidf_array = tfidf_matrix.toarray()
+        total_docs = len(X_docs)
+        stats = []
+
+        for idx, word in enumerate(feature_names):
+            word_column = tfidf_array[:, idx]
+            df = np.count_nonzero(word_column > 0)
+            df_ratio = df / total_docs if total_docs > 0 else 0
+            avg_tf = np.mean(word_column[word_column > 0]) if df > 0 else 0
+            avg_tfidf = np.mean(word_column) if df > 0 else 0
+            idf = idf_values[idx]
+
+            stats.append({
+                "word": word,
+                "df": df,
+                "df_ratio": round(df_ratio, 4),
+                "tf_avg": round(avg_tf, 4),
+                "idf": round(idf, 4),
+                "tfidf_avg": round(avg_tfidf, 4),
+            })
+
+        return pd.DataFrame(stats).sort_values(by="tfidf_avg", ascending=False).reset_index(drop=True)
