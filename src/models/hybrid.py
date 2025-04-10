@@ -58,7 +58,7 @@ class HybridClassifier:
 
     def get_word_stats(self):
         """Mengembalikan dataframe statistik kata dari model C5"""
-        return pd.DataFrame(self.c5.word_stats)
+        return pd.DataFrame(self.c5.word_stats).sort_values(by="information_gain", ascending=False).reset_index(drop=True)
 
     def get_tfidf_word_stats(self, X_docs):
         if not self.is_vectorizer_trained:
@@ -91,3 +91,13 @@ class HybridClassifier:
             })
 
         return pd.DataFrame(stats).sort_values(by="tfidf_avg", ascending=False).reset_index(drop=True)
+
+    def get_nearest_neighbors(self, text, k=5):
+        if not self.is_vectorizer_trained:
+            with open(self.vectorizer_path, 'rb') as f:
+                self.vectorizer = pickle.load(f)
+
+        vector = self.vectorizer.transform([text])
+        neighbors_info = self.knn.get_neighbors_info(vector, k=k)
+
+        return neighbors_info[0]  # karena input hanya satu teks

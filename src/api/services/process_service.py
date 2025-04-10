@@ -56,7 +56,7 @@ class ProcessService:
             return {}
 
         trainer = HybridModelTrainer(preprocessed_dataset_path)
-        hybrid_model, evaluation_results = trainer.train(
+        hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors = trainer.train(
             n_neighbors, split_size)
         split_results = self.split_dataset(
             preprocessed_dataset_path, split_size)
@@ -65,8 +65,8 @@ class ProcessService:
         model_path = os.path.join(self.STORAGE_PATH, f"{model_id}.joblib")
         joblib.dump(hybrid_model, model_path)  # Simpan model
 
+        # Simpan metadata umum ke models.json
         metadata = self.load_metadata()
-
         model_metadata = {
             "id": model_id,
             "name": name,
@@ -74,18 +74,43 @@ class ProcessService:
             "preprocessed_dataset_id": preprocessed_dataset_id,
             "raw_dataset_id": raw_dataset_id,
             "total_data": len(df),
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat()
+        }
+        metadata.append(model_metadata)
+        self.save_metadata(metadata)
+
+        # Simpan metadata tambahan per model
+        model_meta_dir = os.path.join("src/storage/metadatas/models", model_id)
+        os.makedirs(model_meta_dir, exist_ok=True)
+
+        # Parameter
+        parameters = {
             "n_neighbors": n_neighbors,
             "split_size": split_size,
             "train_size": split_results["train_size"],
             "test_size": split_results["test_size"],
             "train_per_topic": split_results["train_per_topic"],
-            "test_per_topic": split_results["test_per_topic"],
-            "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat(),
-            "evaluation": evaluation_results
+            "test_per_topic": split_results["test_per_topic"]
         }
-        metadata.append(model_metadata)
-        self.save_metadata(metadata)
+        with open(os.path.join(model_meta_dir, "parameters.json"), "w") as f:
+            json.dump(parameters, f, indent=4)
+
+        # Evaluation
+        with open(os.path.join(model_meta_dir, "evaluation.json"), "w") as f:
+            json.dump(evaluation_results, f, indent=4)
+
+        # Word Stats
+        word_stats_df.to_csv(os.path.join(
+            model_meta_dir, "word_stats.csv"), index=False)
+
+        # TF-IDF Stats
+        tfidf_stats.to_csv(os.path.join(
+            model_meta_dir, "tfidf_stats.csv"), index=False)
+
+        # Neighbors
+        df_neighbors.to_csv(os.path.join(
+            model_meta_dir, "neighbors.csv"), index=False)
 
         return model_metadata
 
@@ -119,9 +144,79 @@ class ProcessService:
         self.save_metadata(metadata)
         return True
 
+    def get_models(self):
+        return self.load_metadata()
+
     def get_model(self, model_id):
         metadata = self.load_metadata()
         return next((m for m in metadata if m["id"] == model_id), {})
 
-    def get_models(self):
-        return self.load_metadata()
+    def get_word_stats(self, model_id, page=1, limit=10):
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        file_path = os.path.join(model_dir, "word_stats.csv")
+        if not os.path.exists(file_path):
+            return None
+
+        df = pd.read_csv(file_path)
+        start = (page - 1) * limit
+        end = start + limit
+
+        return {
+            "data": df.iloc[start:end].to_dict(orient="records"),
+            "total_data": len(df),
+            "total_pages": (len(df) + limit - 1) // limit,
+            "current_page": page,
+            "limit": limit,
+        }
+
+    def tfidf_stats(self, model_id, page=1, limit=10):
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        file_path = os.path.join(model_dir, "tfidf_stats.csv")
+        if not os.path.exists(file_path):
+            return None
+
+        df = pd.read_csv(file_path)
+        start = (page - 1) * limit
+        end = start + limit
+
+        return {
+            "data": df.iloc[start:end].to_dict(orient="records"),
+            "total_data": len(df),
+            "total_pages": (len(df) + limit - 1) // limit,
+            "current_page": page,
+            "limit": limit,
+        }
+
+    def neighbors(self, model_id, page=1, limit=10):
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        file_path = os.path.join(model_dir, "neighbors.csv")
+        if not os.path.exists(file_path):
+            return None
+
+        df = pd.read_csv(file_path)
+        start = (page - 1) * limit
+        end = start + limit
+
+        return {
+            "data": df.iloc[start:end].to_dict(orient="records"),
+            "total_data": len(df),
+            "total_pages": (len(df) + limit - 1) // limit,
+            "current_page": page,
+            "limit": limit,
+        }
+
+    def get_parameters(self, model_id):
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        param_path = os.path.join(model_dir, "parameters.json")
+        if not os.path.exists(param_path):
+            return None
+        with open(param_path, "r") as f:
+            return json.load(f)
+
+    def get_evaluation(self, model_id):
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        eval_path = os.path.join(model_dir, "evaluation.json")
+        if not os.path.exists(eval_path):
+            return None
+        with open(eval_path, "r") as f:
+            return json.load(f)

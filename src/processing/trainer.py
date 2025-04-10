@@ -4,6 +4,7 @@ from src.models.hybrid import HybridClassifier
 from src.utilities.model_evaluations import evaluate_model
 from src.utilities.save_model import save_model
 from sklearn.preprocessing import LabelEncoder
+from src.utilities.map_classification_result import map_classification_result
 from itertools import product
 import time
 
@@ -37,18 +38,49 @@ class HybridModelTrainer:
         hybrid_model.fit(X_train, y_train, raw_train, le)
 
         word_stats_df = hybrid_model.get_word_stats()
-        print(word_stats_df.head())
 
         tfidf_stats = hybrid_model.get_tfidf_word_stats(X_train)
-        print(tfidf_stats.head())
 
         # Prediksi hasil
         y_pred = hybrid_model.predict(X_test)
 
+        # Ambil vektor untuk X_test
+        X_test_vectors = hybrid_model.vectorizer.transform(X_test)
+
+        # Hitung tetangga terdekat untuk setiap data uji
+        all_neighbors = []
+        for i in range(len(X_test)):
+            neighbors = hybrid_model.knn.get_neighbors_info(
+                X_test_vectors[i], k=n_neighbors)[0]
+            all_neighbors.append({
+                "test_index": i,
+                "test_text": raw_test[i],
+                "predicted_label": le.inverse_transform([y_pred[i]])[0],
+                "true_label": le.inverse_transform([y_test[i]])[0],
+                "neighbors": neighbors
+            })
+
+        # Konversi ke DataFrame
+        rows = []
+        for item in all_neighbors:
+            for neighbor in item["neighbors"]:
+                rows.append({
+                    "test_index": item["test_index"],
+                    "test_text": item["test_text"],
+                    "predicted_label": item["predicted_label"],
+                    "true_label": item["true_label"],
+                    "neighbor_index": neighbor["index"],
+                    "neighbor_label": map_classification_result(neighbor["label"]),
+                    "neighbor_distance": neighbor["distance"],
+                    "neighbor_text": neighbor["text"]
+                })
+
+        df_neighbors = pd.DataFrame(rows)
+
         # Evaluasi model
         evaluation_results = evaluate_model(y_test, y_pred)
 
-        return hybrid_model, evaluation_results
+        return hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors
 
     def train_with_gridsearch(self, param_grid=None):
         """Melatih model Hybrid C5.0-KNN dengan Grid Search untuk mencari parameter terbaik"""

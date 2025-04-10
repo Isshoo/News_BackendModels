@@ -127,3 +127,57 @@ class ProcessController:
             return jsonify({"error": "Model not found"}), 404
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    def get_model_evaluation(self, model_id):
+        try:
+            result = self.process_service.get_evaluation(model_id)
+            if not result:
+                return jsonify({"error": "Evaluation not found"}), 404
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    def get_model_parameters(self, model_id):
+        try:
+            result = self.process_service.get_parameters(model_id)
+            if not result:
+                return jsonify({"error": "Parameters not found"}), 404
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    def fetch_word_stats(self, model_id):
+        try:
+            page = int(request.args.get("page", 1))
+            limit = int(request.args.get("limit", 10))
+            result = self.process_service.get_word_stats(
+                model_id, page, limit)
+            if not result:
+                return jsonify({"error": "Word stats not found"}), 404
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    def fetch_tfidf_stats(self, model_id):
+        try:
+            page = int(request.args.get("page", 1))
+            limit = int(request.args.get("limit", 10))
+            result = self.process_service.tfidf_stats(
+                model_id, page, limit)
+            if not result:
+                return jsonify({"error": "TFIDF stats not found"}), 404
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    def fetch_neighbors(self, model_id):
+        try:
+            page = int(request.args.get("page", 1))
+            limit = int(request.args.get("limit", 10))
+            result = self.process_service.neighbors(
+                model_id, page, limit)
+            if not result:
+                return jsonify({"error": "Neighbors not found"}), 404
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

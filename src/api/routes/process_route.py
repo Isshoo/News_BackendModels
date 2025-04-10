@@ -16,3 +16,15 @@ process_bp.route("/process/model/<model_id>/name",
                  methods=["PUT"])(process_controller.edit_model_name)
 process_bp.route("/process/model/<model_id>",
                  methods=["DELETE"])(process_controller.delete_model)
+
+# Endpoint metadata tambahan & CSV pagination
+process_bp.route("/process/model/<model_id>/evaluation",
+                 methods=["GET"])(process_controller.get_model_evaluation)
+process_bp.route("/process/model/<model_id>/parameters",
+                 methods=["GET"])(process_controller.get_model_parameters)
+process_bp.route("/process/model/<model_id>/word-stats",
+                 methods=["GET"])(process_controller.fetch_word_stats)
+process_bp.route("/process/model/<model_id>/tfidf-stats",
+                 methods=["GET"])(process_controller.fetch_tfidf_stats)
+process_bp.route("/process/model/<model_id>/neighbors",
+                 methods=["GET"])(process_controller.fetch_neighbors)

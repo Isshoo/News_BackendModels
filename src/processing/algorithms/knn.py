@@ -106,6 +106,21 @@ class CustomKNN:
     def get_indices(self):
         return self.indices_
 
+    def get_neighbors_info(self, X, k=5):
+        distances, indices = self.model.kneighbors(X, n_neighbors=k)
+        neighbors_info = []
+
+        for i, (dists, idxs) in enumerate(zip(distances, indices)):
+            neighbors = [{
+                'index': idx,
+                'label': self.y_train[idx],
+                'text': self.original_docs[idx],
+                'distance': dist
+            } for idx, dist in zip(idxs, dists)]
+            neighbors_info.append(neighbors)
+
+        return neighbors_info
+
 
 if __name__ == "__main__":
     max_features_options = [3500, 4000, 4250, 4750, 5000, None]
