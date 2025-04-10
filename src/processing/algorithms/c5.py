@@ -4,6 +4,7 @@ from collections import Counter
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.preprocessing import LabelEncoder
+from src.utilities.map_classification_result import map_classification_result
 import time
 
 
@@ -45,21 +46,38 @@ class CustomC5:
 
     def fit(self, X_train, y_train):
         unique_labels, label_indices = np.unique(y_train, return_inverse=True)
-        word_counts = {label: Counter() for label in unique_labels}
         text_sets = [set(text.split()) for text in X_train]
 
-        # Hitung DF dan filter kata
-        doc_counts = Counter(word for text in text_sets for word in set(text))
+        # Hitung DF awal dan filter kata
+        raw_doc_counts = Counter(
+            word for text in text_sets for word in set(text))
         total_docs = len(text_sets)
         filtered_words = {
-            word for word, count in doc_counts.items()
+            word for word, count in raw_doc_counts.items()
             if count >= self.min_df and count / total_docs <= self.max_df_ratio
         }
 
-        for text_set, label_idx in zip(text_sets, label_indices):
-            filtered_text_set = text_set & filtered_words
-            word_counts[unique_labels[label_idx]].update(filtered_text_set)
+        # Filter text_sets & labels
+        filtered_text_sets = []
+        filtered_labels = []
 
+        for text_set, label in zip(text_sets, y_train):
+            filtered_set = text_set & filtered_words
+            if filtered_set:  # hanya ambil dokumen yang masih mengandung kata setelah difilter
+                filtered_text_sets.append(filtered_set)
+                filtered_labels.append(label)
+
+        # Hitung ulang DF setelah filter
+        final_doc_counts = Counter(
+            word for text in filtered_text_sets for word in set(text))
+        final_total_docs = len(filtered_text_sets)
+
+        # Hitung frekuensi kata per label
+        word_counts = {label: Counter() for label in unique_labels}
+        for text_set, label in zip(filtered_text_sets, filtered_labels):
+            word_counts[label].update(text_set)
+
+        # Simpan topik data
         self.topic_data = {
             label: {
                 'entropy': self.compute_entropy(list(word_freq.elements())),
@@ -68,12 +86,50 @@ class CustomC5:
             for label, word_freq in word_counts.items()
         }
 
-        H_S = self.compute_entropy(y_train)
+        # Hitung entropi global (H(S))
+        H_S = self.compute_entropy(filtered_labels)
 
-        self.word_gains = {
-            word: self.compute_information_gain(word, text_sets, y_train, H_S)
-            for word in filtered_words
-        }
+        # Siapkan tabel statistik kata
+        self.word_stats = []
+        self.word_gains = {}
+
+        for word in filtered_words:
+            H_word = self.compute_word_entropy(
+                word, filtered_text_sets, filtered_labels)
+            H_wo = self.compute_entropy_without_word(
+                word, filtered_text_sets, filtered_labels)
+            S_word = sum(
+                1 for text_set in filtered_text_sets if word in text_set)
+            S_not_word = final_total_docs - S_word
+            IG = H_S - ((S_word / final_total_docs) * H_word +
+                        (S_not_word / final_total_docs) * H_wo)
+
+            # Hitung frekuensi per label
+            word_freq_per_label = {
+                label: word_counts[label][word]
+                for label in unique_labels
+                if word_counts[label][word] > 0
+            }
+
+            mapped_word_freq_per_label = {
+                map_classification_result(label): freq
+                for label, freq in word_freq_per_label.items()
+            }
+
+            self.word_gains[word] = IG
+            self.word_stats.append({
+                'word': word,
+                'df': final_doc_counts[word],
+                'df_ratio': final_doc_counts[word] / final_total_docs,
+                'word_entropy': H_word,
+                'entropy_without_word': H_wo,
+                'information_gain': IG,
+                'freq_per_label': mapped_word_freq_per_label,
+                'top_label': map_classification_result(
+                    max(word_freq_per_label,
+                        key=word_freq_per_label.get, default=None)
+                )
+            })
 
     def predict(self, text):
         words = text.split()
@@ -165,6 +221,9 @@ if __name__ == "__main__":
         if acc > best_score:
             best_score = acc
             best_params = params
+
+        df_stats = pd.DataFrame(c5.word_stats)
+        print(df_stats.head(10))
 
     print("\n✅ Parameter terbaik ditemukan:")
     print(f"  test_size: {best_params['test_size']}")
