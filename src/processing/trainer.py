@@ -36,6 +36,9 @@ class HybridModelTrainer:
         # Latih model
         hybrid_model.fit(X_train, y_train, raw_train, le)
 
+        word_stats_df = hybrid_model.get_word_stats()
+        print(word_stats_df.head())
+
         # Prediksi hasil
         y_pred = hybrid_model.predict(X_test)
 
@@ -149,16 +152,16 @@ if __name__ == "__main__":
     trainer = HybridModelTrainer(dataset_path)
 
     # # Training model secara manual
-    # trainer.train(n_neighbors=11, test_size=0.25,
-    #               c5_threshold=0.5, max_features=None)
+    trainer.train(n_neighbors=11, test_size=0.25,
+                  c5_threshold=0.65, max_features=None)
 
     # Training model dengan Grid Search
-    best_model, best_params, best_score = trainer.train_with_gridsearch()
-    print(f"\nParameter terbaik ditemukan: {best_params}")
-    print(f"Akurasi terbaik: {best_score:.4f}")
-    isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
-    if isSimpan.lower() == "y":
-        save_model(best_model, "./src/storage/models/base/hybrid_model_0.joblib")
-        print("Model hybrid disimpan sebagai default")
-    else:
-        print("Training Selesai")
+    # best_model, best_params, best_score = trainer.train_with_gridsearch()
+    # print(f"\nParameter terbaik ditemukan: {best_params}")
+    # print(f"Akurasi terbaik: {best_score:.4f}")
+    # isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
+    # if isSimpan.lower() == "y":
+    #     save_model(best_model, "./src/storage/models/base/hybrid_model_0.joblib")
+    #     print("Model hybrid disimpan sebagai default")
+    # else:
+    #     print("Training Selesai")

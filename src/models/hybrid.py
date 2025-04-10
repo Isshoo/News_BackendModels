@@ -55,3 +55,7 @@ class HybridClassifier:
                 predictions.append(knn_prediction)
 
         return predictions
+
+    def get_word_stats(self):
+        """Mengembalikan dataframe statistik kata dari model C5"""
+        return pd.DataFrame(self.c5.word_stats)
