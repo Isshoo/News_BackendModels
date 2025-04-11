@@ -74,6 +74,9 @@ class ProcessService:
             "preprocessed_dataset_id": preprocessed_dataset_id,
             "raw_dataset_id": raw_dataset_id,
             "total_data": len(df),
+            "n_neighbors": n_neighbors,
+            "split_size": split_size,
+            "accuracy": evaluation_results["accuracy"],
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat()
         }
