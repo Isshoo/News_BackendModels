@@ -62,11 +62,11 @@ class NewsClassifier:
                              on_bad_lines="skip")
 
             # Pastikan kolom yang diperlukan ada
-            required_columns = {"contentSnippet", "topik"}
+            required_columns = {"contentSnippet"}
             if not required_columns.issubset(df.columns):
                 return {"error": f"File CSV harus memiliki kolom: {', '.join(required_columns)}"}
 
-            df = df.dropna(subset=["contentSnippet", "topik"])
+            df = df.dropna(subset=["contentSnippet"])
 
             # Inisialisasi kolom hasil
             preprocessed_texts = []
