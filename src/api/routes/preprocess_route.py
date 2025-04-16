@@ -26,8 +26,8 @@ preprocess_bp.route("/preprocessed/<dataset_id>", methods=["DELETE"]
                     )(preprocess_controller.delete_preprocessed_dataset)
 
 # Route untuk mengubah label manual dataset yang sudah diproses
-preprocess_bp.route("/preprocessed/<dataset_id>/label", methods=["PUT"]
-                    )(preprocess_controller.update_label)
+preprocess_bp.route("/preprocessed/<dataset_id>/data", methods=["PUT"]
+                    )(preprocess_controller.update_data)
 
 # Route untuk menambah data pada dataset yang sudah diproses
 preprocess_bp.route("/preprocessed/<dataset_id>/data", methods=["POST"]

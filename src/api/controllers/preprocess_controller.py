@@ -108,17 +108,17 @@ class PreprocessController:
 
         return jsonify(result), status_code
 
-    def update_label(self, dataset_id):
+    def update_data(self, dataset_id):
         """ Mengubah label manual dataset yang sudah diproses """
 
         if dataset_id is None:
             return jsonify({"error": "dataset_id is required"}), 400
         data = request.json
-        if "index" not in data or "topik" not in data:
+        if "index" not in data or "topik" not in data or "preprocessedContent" not in data:
             return jsonify({"error": "Invalid request"}), 400
 
-        result, status_code = self.preprocess_service.update_label(
-            dataset_id, data["index"], data["topik"]
+        result, status_code = self.preprocess_service.update_data(
+            dataset_id, data["index"], data["topik"], data["preprocessedContent"]
         )
         return jsonify(result), status_code
 

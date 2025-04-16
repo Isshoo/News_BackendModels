@@ -142,7 +142,7 @@ class PreprocessService:
 
         return {"message": "Preprocessed dataset deleted successfully"}, 200
 
-    def update_label(self, dataset_id, index, new_label):
+    def update_data(self, dataset_id, index, new_label, new_preprocessed_content):
         metadata = self.load_metadata()
         dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
@@ -157,12 +157,13 @@ class PreprocessService:
             return {"message": "Data not found", "error": True}, 404
 
         df.at[index, "topik"] = new_label
+        df.at[index, "preprocessedContent"] = new_preprocessed_content
 
         result = self.update_preprocessed_dataset(dataset_id, df)
 
         if not result:
-            return {"message": "Failed to update label", "error": True}, 500
-        return {"message": "Label updated successfully"}, 200
+            return {"message": "Failed to update data", "error": True}, 500
+        return {"message": "Data updated successfully"}, 200
 
     def delete_data(self, dataset_id, index):
         metadata = self.load_metadata()
