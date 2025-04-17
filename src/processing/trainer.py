@@ -18,7 +18,7 @@ class HybridModelTrainer:
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    def train(self, n_neighbors=11, test_size=0.25, c5_threshold=0.65, max_features=None):
+    def train(self, n_neighbors=7, test_size=0.25, c5_threshold=0.5, max_features=None):
         """Melatih model Hybrid C5.0-KNN"""
 
         X_texts = self.df["preprocessedContent"].values
@@ -183,20 +183,20 @@ class HybridModelTrainer:
 
 
 if __name__ == "__main__":
-    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_preprocessed_stemmed.csv"
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset3_original_preprocessed.csv"
     trainer = HybridModelTrainer(dataset_path)
 
     # # Training model secara manual
-    trainer.train(n_neighbors=11, test_size=0.25,
-                  c5_threshold=0.65, max_features=None)
+    # trainer.train(n_neighbors=11, test_size=0.25,
+    #               c5_threshold=0.65, max_features=None)
 
     # Training model dengan Grid Search
-    # best_model, best_params, best_score = trainer.train_with_gridsearch()
-    # print(f"\nParameter terbaik ditemukan: {best_params}")
-    # print(f"Akurasi terbaik: {best_score:.4f}")
-    # isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
-    # if isSimpan.lower() == "y":
-    #     save_model(best_model, "./src/storage/models/base/hybrid_model_0.joblib")
-    #     print("Model hybrid disimpan sebagai default")
-    # else:
-    #     print("Training Selesai")
+    best_model, best_params, best_score = trainer.train_with_gridsearch()
+    print(f"\nParameter terbaik ditemukan: {best_params}")
+    print(f"Akurasi terbaik: {best_score:.4f}")
+    isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
+    if isSimpan.lower() == "y":
+        save_model(best_model, "./src/storage/models/base/hybrid_model_0.joblib")
+        print("Model hybrid disimpan sebagai default")
+    else:
+        print("Training Selesai")

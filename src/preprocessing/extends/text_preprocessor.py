@@ -1,10 +1,15 @@
+from src.preprocessing.preprocessor import Preprocessor
+
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+from mpstemmer import MPStemmer
+import spacy
+from spacy.lang.id import Indonesian
+
 import nltk
 import html
 import re
 import time
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
-from src.preprocessing.preprocessor import Preprocessor
 import ssl
 
 try:
@@ -18,23 +23,37 @@ else:
 class TextPreprocessor(Preprocessor):
 
     def __init__(self):
-        factory = StemmerFactory()
-        self.stemmer = factory.create_stemmer()
+        # factory = StemmerFactory()
+        # self.stemmer = factory.create_stemmer()
+        self.stemmer = MPStemmer()
+
+        self.nlp = spacy.blank("id")
+        self.nlp.add_pipe("lemmatizer", config={"mode": "lookup"})
+        self.nlp.initialize()
+
         stopword_factory = StopWordRemoverFactory()
         self.stopwords = set(stopword_factory.get_stop_words())
         # nltk.download('punkt')
 
     def normalize_custom_words(self, text):
         replacements = {
-            "rp": "rupiah",
-            "usd": "dolar",
-            "idr": "rupiah",
-            "amp": "",     # untuk amp yang masih tersisa
-            "nbsp": "",    # untuk nbsp yang masih tersisa
+            "rp": "rupiah", "usd": "dolar", "idr": "rupiah",
+            "amp": "", "nbsp": "",
+            "senin": "", "selasa": "", "rabu": "", "kamis": "", "jumat": "", "sabtu": "", "minggu": "",
+            "pagi": "", "siang": "", "sore": "", "malam": "",
+            "jam": "", "menit": "", "detik": "",
+            "januari": "", "februari": "", "maret": "", "april": "", "mei": "", "juni": "",
+            "juli": "", "agustus": "", "september": "", "oktober": "", "november": "", "desember": "",
+            "satu": "", "dua": "", "tiga": "", "empat": "", "lima": "",
+            "enam": "", "tujuh": "", "delapan": "", "sembilan": "", "sepuluh": "",
         }
         for word, replacement in replacements.items():
             text = re.sub(rf"\b{word}\b", replacement, text)
         return text
+
+    def lemmatize_text(self, text):
+        doc = self.nlp(text)
+        return " ".join([token.lemma_ for token in doc])
 
     def preprocess(self, text):
         print(f"Text Awal: {text}")
@@ -59,17 +78,18 @@ class TextPreprocessor(Preprocessor):
         text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
 
         # Tokenisasi
-        tokens = nltk.word_tokenize(text)
-
-        # Menghapus stopwords
-        tokens = [token for token in tokens if token not in self.stopwords]
+        tokens = [t for t in nltk.word_tokenize(
+            text) if len(t) > 1]
 
         # Stemming
-        text = self.stemmer.stem(" ".join(tokens))
+        text = self.stemmer.stem_kalimat(" ".join(tokens))
+
+        # lemmatization
+        # text = self.lemmatize_text(text)
 
         # Menghapus Stopwords lagi
-        tokens = nltk.word_tokenize(text)
-        tokens = [token for token in tokens if token not in self.stopwords]
+        tokens = [t for t in nltk.word_tokenize(
+            text) if t not in self.stopwords and len(t) > 1]
         text = " ".join(tokens)
 
         # Kembalikan teks yang telah diproses
@@ -87,7 +107,7 @@ if __name__ == "__main__":
         "Hillstate menelan kekalahan 1-3 (21-25, 25-13, 21-25, 17-25) dari Hi Pass dalam pertandingan Liga Voli Korea Selatan, Kamis (27/2).",
         "Poco meluncurkan X7 Series yang beranggotakan X7 5G dan X7 Pro 5G. Ponsel kelas midrange ini dibanderol dengan harga mulai dari Rp3,799 juta.",
         "Rupiah ditutup di level Rp16.595 per dolar AS pada Jumat (28/2) sering-sering amp;nbsp;turun 141 poin&amp;nbsp; atau minus 0,86 persen dibandingkan penutupan perdagangan sebelumnya ke-2 data-set",
-        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17, padahal x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
+        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17, padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
     ]
     # hitung watu pemrosesan
     start_time = time.time()
