@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 import uuid
 import joblib
 import pandas as pd
@@ -143,6 +144,11 @@ class ProcessService:
         if model_path and os.path.exists(model_path):
             os.remove(model_path)
 
+        # Hapus folder metadata model
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        if os.path.exists(model_dir):
+            shutil.rmtree(model_dir)
+
         metadata = [m for m in metadata if m["id"] != model_id]
         self.save_metadata(metadata)
         return True
@@ -170,6 +176,7 @@ class ProcessService:
             "total_pages": (len(df) + limit - 1) // limit,
             "current_page": page,
             "limit": limit,
+            "initial_entropy": df["initial_entropy"].mean() if "initial_entropy" in df.columns else None
         }
 
     def tfidf_stats(self, model_id, page=1, limit=10):
