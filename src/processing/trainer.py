@@ -40,6 +40,14 @@ class HybridModelTrainer:
         word_stats_df = hybrid_model.get_word_stats()
 
         tfidf_stats = hybrid_model.get_tfidf_word_stats(X_train)
+        # Set selisih word stats dan tf-idf
+        word_stats_set = set(word_stats_df['word'])
+        tfidf_set = set(tfidf_stats['word'])
+
+        # Cari kata yang ada di word_stats tapi tidak di tf-idf
+        missing_in_tfidf = word_stats_set - tfidf_set
+
+        print("Kata yang tidak ada di TF-IDF:", missing_in_tfidf)
 
         # Prediksi hasil
         y_pred = hybrid_model.predict(X_test)
@@ -187,8 +195,8 @@ if __name__ == "__main__":
     trainer = HybridModelTrainer(dataset_path)
 
     # # Training model secara manual
-    # trainer.train(n_neighbors=11, test_size=0.25,
-    #               c5_threshold=0.65, max_features=None)
+    # trainer.train(n_neighbors=5, test_size=0.25,
+    #               c5_threshold=0.75, max_features=None)
 
     # Training model dengan Grid Search
     best_model, best_params, best_score = trainer.train_with_gridsearch()
@@ -196,7 +204,7 @@ if __name__ == "__main__":
     print(f"Akurasi terbaik: {best_score:.4f}")
     isSimpan = input("Apakah model akan disimpan sebagai default? y/n: ")
     if isSimpan.lower() == "y":
-        save_model(best_model, "./src/storage/models/base/hybrid_model_0.joblib")
+        save_model(best_model, "./src/storage/models/base/hybrid_model.joblib")
         print("Model hybrid disimpan sebagai default")
     else:
         print("Training Selesai")

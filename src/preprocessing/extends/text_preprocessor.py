@@ -108,14 +108,14 @@ class TextPreprocessor(Preprocessor):
         # Hapus angka kecuali dalam format "ke-24"
         text = re.sub(r"\b(?!ke-\d+)\d+\b", "", text)
         text = re.sub(r"[^\w\s]", " ", text)
-        # text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
+        text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
 
         # Tokenisasi
         # tokens = [t for t in nltk.word_tokenize(
         #     text) if len(t) > 1]
         # Menghapus Stopwords lagi
         tokens = [t for t in nltk.word_tokenize(
-            text) if t not in self.stop_words]
+            text) if t not in self.stop_words if len(t) > 1]
         text = " ".join(tokens)
 
         # Lindungi kata-kata khusus agar tidak dilemmatize
@@ -130,6 +130,10 @@ class TextPreprocessor(Preprocessor):
         # Stemming
         # text = self.stemmer.stem(text)
         text = self.stemmerMP.stem_kalimat(text)
+
+        tokens = [t for t in nltk.word_tokenize(
+            text) if len(t) > 1]
+        text = " ".join(tokens)
 
         # Kembalikan teks yang telah diproses
         print(f"Text Setelah: {text}")
