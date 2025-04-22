@@ -18,7 +18,7 @@ class HybridModelTrainer:
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
 
-    def train(self, n_neighbors=7, test_size=0.25, c5_threshold=0.5, max_features=None):
+    def train(self, n_neighbors=5, test_size=0.2, c5_threshold=0.75, max_features=None):
         """Melatih model Hybrid C5.0-KNN"""
 
         X_texts = self.df["preprocessedContent"].values
