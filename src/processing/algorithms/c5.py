@@ -67,6 +67,9 @@ class CustomC5:
                 filtered_text_sets.append(filtered_set)
                 filtered_labels.append(label)
 
+        # Hitung entropy awal sebelum filtering dokumen
+        H_S_full = self.compute_entropy(y_train)
+
         # Hitung ulang DF setelah filter
         final_doc_counts = Counter(
             word for text in filtered_text_sets for word in set(text))
@@ -128,7 +131,9 @@ class CustomC5:
                 'top_label': map_classification_result(
                     max(word_freq_per_label,
                         key=word_freq_per_label.get, default=None)
-                )
+                ),
+                'initial_entropy': H_S_full,
+                'final_entropy': H_S
             })
 
     def predict(self, text):

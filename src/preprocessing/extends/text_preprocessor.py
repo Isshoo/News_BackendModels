@@ -3,8 +3,6 @@ from src.preprocessing.preprocessor import Preprocessor
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from mpstemmer import MPStemmer
-import spacy
-from spacy.lang.id import Indonesian
 
 import nltk
 import html
@@ -20,14 +18,35 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 
+import spacy
+from spacy.lang.id import Indonesian
+from spacy.tokenizer import Tokenizer
+from spacy.util import compile_prefix_regex, compile_suffix_regex, compile_infix_regex
+
+
+def custom_tokenizer(nlp):
+    # Hilangkan infix `(?<=[0-9])(?=[a-zA-Z])` yang menyebabkan pemisahan 5G jadi 5 dan G
+    infix_re = compile_infix_regex([
+        r"[-~]",  # masih pisah kalau ada tanda ini, seperti `x7-Xtreme`
+    ])
+    return Tokenizer(
+        nlp.vocab,
+        rules=nlp.Defaults.tokenizer_exceptions,
+        prefix_search=compile_prefix_regex(nlp.Defaults.prefixes).search,
+        suffix_search=compile_suffix_regex(nlp.Defaults.suffixes).search,
+        infix_finditer=infix_re.finditer,
+    )
+
+
 class TextPreprocessor(Preprocessor):
 
     def __init__(self):
-        # factory = StemmerFactory()
-        # self.stemmer = factory.create_stemmer()
-        self.stemmer = MPStemmer()
+        factory = StemmerFactory()
+        self.stemmer = factory.create_stemmer()
+        self.stemmerMP = MPStemmer()
 
         self.nlp = spacy.blank("id")
+        self.nlp.tokenizer = custom_tokenizer(self.nlp)
         self.nlp.add_pipe("lemmatizer", config={"mode": "lookup"})
         self.nlp.initialize()
 
@@ -49,6 +68,23 @@ class TextPreprocessor(Preprocessor):
         }
         for word, replacement in replacements.items():
             text = re.sub(rf"\b{word}\b", replacement, text)
+        return text
+
+    def auto_protect_keywords(self, text):
+        # Ambil kata-kata gabungan angka-huruf (contoh: 5g, x7-xtreme)
+        pattern = r'\b(?:[a-z]*\d+[a-z]+[a-z\d-]*)\b|\b(?:\d+[a-z]+)\b'
+        keywords = re.findall(pattern, text.lower())
+        protected_map = {}
+        # set() untuk hindari duplikat
+        for i, keyword in enumerate(set(keywords)):
+            token = f"PROTECTED{i}"
+            protected_map[token] = keyword
+            text = re.sub(rf"\b{re.escape(keyword)}\b", token, text)
+        return text, protected_map
+
+    def restore_keywords(self, text, protected_map):
+        for token, keyword in protected_map.items():
+            text = text.replace(token, keyword)
         return text
 
     def lemmatize_text(self, text):
@@ -78,18 +114,25 @@ class TextPreprocessor(Preprocessor):
         text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
 
         # Tokenisasi
-        tokens = [t for t in nltk.word_tokenize(
-            text) if len(t) > 1]
+        # tokens = [t for t in nltk.word_tokenize(
+        #     text) if len(t) > 1]
 
         # Stemming
-        text = self.stemmer.stem_kalimat(" ".join(tokens))
+        # text = self.stemmerMP.stem_kalimat(text)
+        # text = self.stemmer.stem(text)
+
+        # Lindungi kata-kata khusus agar tidak dilemmatize
+        text, protected_map = self.auto_protect_keywords(text)
 
         # lemmatization
-        # text = self.lemmatize_text(text)
+        text = self.lemmatize_text(text)
+
+        # Kembalikan kata-kata yang dilindungi
+        text = self.restore_keywords(text, protected_map)
 
         # Menghapus Stopwords lagi
         tokens = [t for t in nltk.word_tokenize(
-            text) if t not in self.stopwords and len(t) > 1]
+            text) if t not in self.stopwords]
         text = " ".join(tokens)
 
         # Kembalikan teks yang telah diproses
@@ -107,7 +150,7 @@ if __name__ == "__main__":
         "Hillstate menelan kekalahan 1-3 (21-25, 25-13, 21-25, 17-25) dari Hi Pass dalam pertandingan Liga Voli Korea Selatan, Kamis (27/2).",
         "Poco meluncurkan X7 Series yang beranggotakan X7 5G dan X7 Pro 5G. Ponsel kelas midrange ini dibanderol dengan harga mulai dari Rp3,799 juta.",
         "Rupiah ditutup di level Rp16.595 per dolar AS pada Jumat (28/2) sering-sering amp;nbsp;turun 141 poin&amp;nbsp; atau minus 0,86 persen dibandingkan penutupan perdagangan sebelumnya ke-2 data-set",
-        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17, padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
+        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17,bertanya-tanya padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
     ]
     # hitung watu pemrosesan
     start_time = time.time()
