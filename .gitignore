@@ -9,6 +9,7 @@ cache
 
 src/storage/datasets/base/*
 src/storage/datasets/uploads/*
+src/storage/datasets/testing/*
 src/storage/datasets/preprocessed/*
 src/storage/datasets/processed/*
 src/storage/datasets/classifications/*
