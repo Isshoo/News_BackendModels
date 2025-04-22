@@ -58,13 +58,6 @@ class TextPreprocessor(Preprocessor):
         replacements = {
             "rp": "rupiah", "usd": "dolar", "idr": "rupiah",
             "amp": "", "nbsp": "",
-            "senin": "", "selasa": "", "rabu": "", "kamis": "", "jumat": "", "sabtu": "", "minggu": "",
-            "pagi": "", "siang": "", "sore": "", "malam": "",
-            "jam": "", "menit": "", "detik": "",
-            "januari": "", "februari": "", "maret": "", "april": "", "mei": "", "juni": "",
-            "juli": "", "agustus": "", "september": "", "oktober": "", "november": "", "desember": "",
-            "satu": "", "dua": "", "tiga": "", "empat": "", "lima": "",
-            "enam": "", "tujuh": "", "delapan": "", "sembilan": "", "sepuluh": "",
         }
         for word, replacement in replacements.items():
             text = re.sub(rf"\b{word}\b", replacement, text)
@@ -111,7 +104,7 @@ class TextPreprocessor(Preprocessor):
         # Hapus angka kecuali dalam format "ke-24"
         text = re.sub(r"\b(?!ke-\d+)\d+\b", "", text)
         text = re.sub(r"[^\w\s]", " ", text)
-        text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
+        # text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
 
         # Tokenisasi
         # tokens = [t for t in nltk.word_tokenize(
@@ -150,7 +143,7 @@ if __name__ == "__main__":
         "Hillstate menelan kekalahan 1-3 (21-25, 25-13, 21-25, 17-25) dari Hi Pass dalam pertandingan Liga Voli Korea Selatan, Kamis (27/2).",
         "Poco meluncurkan X7 Series yang beranggotakan X7 5G dan X7 Pro 5G. Ponsel kelas midrange ini dibanderol dengan harga mulai dari Rp3,799 juta.",
         "Rupiah ditutup di level Rp16.595 per dolar AS pada Jumat (28/2) sering-sering amp;nbsp;turun 141 poin&amp;nbsp; atau minus 0,86 persen dibandingkan penutupan perdagangan sebelumnya ke-2 data-set",
-        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17,bertanya-tanya padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
+        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17,bertanya-tanya proyek-proyek banyak-banyak padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
     ]
     # hitung watu pemrosesan
     start_time = time.time()
