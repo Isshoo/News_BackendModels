@@ -5,6 +5,8 @@ from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from mpstemmer import MPStemmer
 
 import nltk
+from nltk.corpus import stopwords
+
 import html
 import re
 import time
@@ -52,7 +54,9 @@ class TextPreprocessor(Preprocessor):
 
         stopword_factory = StopWordRemoverFactory()
         self.stopwords = set(stopword_factory.get_stop_words())
+
         # nltk.download('punkt')
+        self.stop_words = set(stopwords.words('indonesian'))
 
     def normalize_custom_words(self, text):
         replacements = {
@@ -109,6 +113,10 @@ class TextPreprocessor(Preprocessor):
         # Tokenisasi
         # tokens = [t for t in nltk.word_tokenize(
         #     text) if len(t) > 1]
+        # Menghapus Stopwords lagi
+        tokens = [t for t in nltk.word_tokenize(
+            text) if t not in self.stop_words]
+        text = " ".join(tokens)
 
         # Lindungi kata-kata khusus agar tidak dilemmatize
         text, protected_map = self.auto_protect_keywords(text)
@@ -122,11 +130,6 @@ class TextPreprocessor(Preprocessor):
         # Stemming
         # text = self.stemmer.stem(text)
         text = self.stemmerMP.stem_kalimat(text)
-
-        # Menghapus Stopwords lagi
-        tokens = [t for t in nltk.word_tokenize(
-            text) if t not in self.stopwords]
-        text = " ".join(tokens)
 
         # Kembalikan teks yang telah diproses
         print(f"Text Setelah: {text}")

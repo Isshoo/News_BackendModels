@@ -94,15 +94,15 @@ class HybridModelTrainer:
         # Default grid search parameters
         if param_grid is None:
             param_grid = {
-                "n_neighbors": [5, 7, 9, 11],  # Coba beberapa nilai KNN
+                "n_neighbors": [5, 7, 11],  # Coba beberapa nilai KNN
                 # Coba beberapa split train-test
                 "test_size": [0.2, 0.25],
                 # Coba berbagai random state
                 "random_state": [42, 100],
                 # Coba beberapa split C5.0
-                "c5_threshold": [0.4, 0.5, 0.65],
+                "c5_threshold": [0.5, 0.65, 0.75],
                 # Coba beberapa nilai maksimum fitur
-                "max_features": [5000, 6000, None]
+                "max_features": [None]
             }
 
         best_score = 0

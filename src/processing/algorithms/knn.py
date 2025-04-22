@@ -128,7 +128,7 @@ if __name__ == "__main__":
     random_state_options = [4, 42, 100]
     n_neighbors_options = [3, 5, 7, 9, 11]
 
-    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_preprocessed_stemmed.csv"
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset3_original_preprocessed.csv"
     df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
 
     if df.empty:
