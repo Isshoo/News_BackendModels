@@ -35,6 +35,60 @@ class DatasetController:
             self.dataset_service.DATASET_DIR, file.filename)
         file.save(filepath)
 
+        # ==== VALIDASI TAMBAHAN DIMULAI ====
+        import pandas as pd
+
+        # Cek apakah file kosong
+        try:
+            df = pd.read_csv(filepath, sep=',')
+        except pd.errors.EmptyDataError:
+            return jsonify({"error": "Uploaded CSV file is empty or has no parsable columns"}), 400
+
+        # 1. Cek ukuran file (maks 5MB)
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)  # Reset posisi baca
+        if file_size > 5 * 1024 * 1024:
+            return jsonify({"error": "File size exceeds 5MB limit"}), 400
+
+        # 3. Cek kolom yang wajib ada
+        required_columns = {"topik", "contentSnippet"}
+        if not required_columns.issubset(df.columns):
+            return jsonify({"error": "CSV must contain 'topik' and 'contentSnippet' columns"}), 400
+
+        # 4. Cek apakah data kosong
+        if df.empty:
+            return jsonify({"error": "CSV has no data"}), 400
+
+        # 5. Validasi topik
+        allowed_topics = {"ekonomi", "olahraga",
+                          "gayahidup", "teknologi", "hiburan"}
+        actual_topics = set(df["topik"].unique())
+        invalid_topics = actual_topics - allowed_topics
+        if invalid_topics:
+            return jsonify({"error": f"Invalid topics found: {', '.join(invalid_topics)}"}), 400
+
+        # Cek apakah kelima topik wajib ada
+        missing_required_topics = allowed_topics - actual_topics
+        if missing_required_topics:
+            return jsonify({"error": f"Dataset must include all 5 required topics, missing: {', '.join(missing_required_topics)}"}), 400
+
+        # 6. Validasi jumlah total data
+        if len(df) < 100:
+            return jsonify({"error": "Dataset must contain at least 100 rows"}), 400
+
+        # 7. Validasi minimal 20 data per topik
+        topic_counts = df["topik"].value_counts()
+        insufficient_topics = [
+            topic for topic in allowed_topics if topic_counts.get(topic, 0) < 20
+        ]
+        if insufficient_topics:
+            return jsonify({
+                "error": f"Each topic must have at least 20 data entries. Lacking: {', '.join(insufficient_topics)}"
+            }), 400
+
+        # ==== VALIDASI TAMBAHAN SELESAI ====
+
         dataset_info = self.dataset_service.save_dataset(
             filepath, dataset_name)
 
