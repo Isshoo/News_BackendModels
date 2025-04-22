@@ -9,7 +9,7 @@ import time
 
 
 class CustomC5:
-    def __init__(self, min_df=5, max_df_ratio=0.8):
+    def __init__(self, min_df=0, max_df_ratio=1):
         self.topic_data = {}
         self.word_gains = {}
         self.min_df = min_df
