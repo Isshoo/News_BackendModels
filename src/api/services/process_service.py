@@ -28,12 +28,8 @@ class ProcessService:
             json.dump(metadata, f, indent=4)
 
     def split_dataset(self, preprocessed_dataset_path, test_size):
-        if not os.path.exists(preprocessed_dataset_path):
-            return {}
 
         df = pd.read_csv(preprocessed_dataset_path, sep=",")
-        if df.empty:
-            return {}
 
         X = df["preprocessedContent"]
         y = df["topik"]
@@ -49,12 +45,8 @@ class ProcessService:
         }
 
     def train_model(self, preprocessed_dataset_id, preprocessed_dataset_path, raw_dataset_id, name, n_neighbors, split_size):
-        if not os.path.exists(preprocessed_dataset_path):
-            return {}
 
         df = pd.read_csv(preprocessed_dataset_path, sep=",")
-        if df.empty:
-            return {}
 
         trainer = HybridModelTrainer(preprocessed_dataset_path)
         hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors = trainer.train(

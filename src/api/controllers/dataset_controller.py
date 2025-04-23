@@ -42,23 +42,16 @@ class DatasetController:
         try:
             df = pd.read_csv(filepath, sep=',')
         except pd.errors.EmptyDataError:
-            return jsonify({"error": "Uploaded CSV file is empty or has no parsable columns"}), 400
-
-        # 1. Cek ukuran file (maks 5MB)
-        file.seek(0, os.SEEK_END)
-        file_size = file.tell()
-        file.seek(0)  # Reset posisi baca
-        if file_size > 5 * 1024 * 1024:
-            return jsonify({"error": "File size exceeds 5MB limit"}), 400
+            return jsonify({"error": "Uploaded Dataset file is empty or has no parsable columns"}), 400
 
         # 3. Cek kolom yang wajib ada
         required_columns = {"topik", "contentSnippet"}
         if not required_columns.issubset(df.columns):
-            return jsonify({"error": "CSV must contain 'topik' and 'contentSnippet' columns"}), 400
+            return jsonify({"error": "Dataset must contain 'topik' and 'contentSnippet' columns"}), 400
 
         # 4. Cek apakah data kosong
         if df.empty:
-            return jsonify({"error": "CSV has no data"}), 400
+            return jsonify({"error": "Dataset has no data"}), 400
 
         # 5. Validasi topik
         allowed_topics = {"ekonomi", "olahraga",
