@@ -74,17 +74,17 @@ class DatasetController:
             return jsonify({"error": f"Dataset must include all 5 required topics, missing: {', '.join(missing_required_topics)}"}), 400
 
         # 6. Validasi jumlah total data
-        if len(df) < 100:
-            return jsonify({"error": "Dataset must contain at least 100 rows"}), 400
+        if len(df) < 1000:
+            return jsonify({"error": "Dataset must contain at least 1000 rows"}), 400
 
         # 7. Validasi minimal 20 data per topik
         topic_counts = df["topik"].value_counts()
         insufficient_topics = [
-            topic for topic in allowed_topics if topic_counts.get(topic, 0) < 20
+            topic for topic in allowed_topics if topic_counts.get(topic, 0) < 200
         ]
         if insufficient_topics:
             return jsonify({
-                "error": f"Each topic must have at least 20 data entries. Lacking: {', '.join(insufficient_topics)}"
+                "error": f"Each topic must have at least 200 data entries. Lacking: {', '.join(insufficient_topics)}"
             }), 400
 
         # ==== VALIDASI TAMBAHAN SELESAI ====

@@ -47,12 +47,45 @@ class PredictController:
             if not file.filename.lower().endswith('.csv'):
                 return jsonify({"error": "Only CSV files are allowed"}), 400
 
-            dataset_name = os.path.splitext(file.filename)[0]
+            dataset_name = os.path.splitext(file.filename)[0].lower()
 
             file_path = os.path.join(
                 self.predict_service.PREDICT_DIR, dataset_name + '.csv')
-
             file.save(file_path)
+
+            # ==== VALIDASI TAMBAHAN DIMULAI ====
+            import pandas as pd
+
+            # Cek apakah file kosong
+            try:
+                df = pd.read_csv(file_path, sep=',')
+            except pd.errors.EmptyDataError:
+                return jsonify({"error": "Uploaded CSV file is empty or has no parsable columns"}), 400
+
+            # 1. Cek ukuran file (maks 5MB)
+            file.seek(0, os.SEEK_END)
+            file_size = file.tell()
+            file.seek(0)  # Reset posisi baca
+            if file_size > 5 * 1024 * 1024:
+                return jsonify({"error": "File size exceeds 5MB limit"}), 400
+
+            # 3. Cek kolom yang wajib ada
+            required_columns = {"contentSnippet"}
+            if not required_columns.issubset(df.columns):
+                return jsonify({"error": "CSV must contain 'topik' and 'contentSnippet' columns"}), 400
+
+            # 4. Cek apakah data kosong
+            if df.empty:
+                return jsonify({"error": "CSV has no data"}), 400
+
+            # 6. Validasi jumlah total data
+            if len(df) < 2:
+                return jsonify({"error": "Dataset must contain at least 2 rows"}), 400
+
+            if len(df) > 20:
+                return jsonify({"error": "Dataset must contain at most 20 rows"}), 400
+
+            # ==== VALIDASI TAMBAHAN SELESAI ====
 
             if 'model_path' not in request.form:
                 result = self.predict_service.predict_csv(
