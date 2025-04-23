@@ -93,6 +93,9 @@ class PreprocessService:
 
         return new_entry
 
+    def fetch_all_preprocessed_datasets(self):
+        return self.load_metadata()
+
     def fetch_preprocessed_datasets(self, raw_dataset_id):
         return [d for d in self.load_metadata() if d["raw_dataset_id"] == raw_dataset_id]
 

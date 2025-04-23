@@ -14,6 +14,10 @@ preprocess_bp.route("/<raw_dataset_id>/preprocessed/copy", methods=["POST"]
                     )(preprocess_controller.create_preprocessed_copy)
 
 # Route untuk mengambil dataset yang sudah diproses
+preprocess_bp.route("/preprocesseds/list", methods=["GET"]
+                    )(preprocess_controller.fetch_all_preprocessed_datasets)
+
+# Route untuk mengambil dataset yang sudah diproses
 preprocess_bp.route("/<raw_dataset_id>/preprocessed/list", methods=["GET"]
                     )(preprocess_controller.fetch_preprocessed_datasets)
 

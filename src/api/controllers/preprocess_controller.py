@@ -54,6 +54,12 @@ class PreprocessController:
 
         return jsonify({"message": "Preprocessed copy created successfully", "data": result})
 
+    def fetch_all_preprocessed_datasets(self):
+        """ Ambil semua dataset yang sudah diproses """
+
+        result = self.preprocess_service.fetch_all_preprocessed_datasets()
+        return jsonify(result), 200
+
     def fetch_preprocessed_datasets(self, raw_dataset_id):
         """ Ambil dataset yang sudah diproses """
 
