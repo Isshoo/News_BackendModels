@@ -66,7 +66,7 @@ class ProcessController:
                 preprocessed_dataset_path, test_size)
 
             # cek jika dalam test per topic ada topic yang nilainya kosong
-            if any(result["test_per_topic"][topic].empty for topic in allowed_topics):
+            if any(result["test_per_topic"][topic] == 0 for topic in allowed_topics):
                 return jsonify({"error": "There is a topic that is empty after splitting"}), 400
 
             return jsonify(result)

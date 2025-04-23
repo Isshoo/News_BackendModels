@@ -72,7 +72,7 @@ class PredictController:
             # 3. Cek kolom yang wajib ada
             required_columns = {"contentSnippet"}
             if not required_columns.issubset(df.columns):
-                return jsonify({"error": "CSV must contain 'topik' and 'contentSnippet' columns"}), 400
+                return jsonify({"error": "CSV must contain 'contentSnippet' columns"}), 400
 
             # 4. Cek apakah data kosong
             if df.empty:
