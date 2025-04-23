@@ -124,7 +124,7 @@ class PreprocessService:
         dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
         if not dataset:
-            return {"message": "Preprocessed dataset not found", "error": True}, 404
+            return {"error": "Preprocessed dataset not found"}, 404
 
         if dataset_id == 'default-stemming':
             return False
@@ -134,10 +134,10 @@ class PreprocessService:
             os.remove(dataset["path"])
             metadata = [d for d in metadata if d["id"] != dataset_id]
             self.save_metadata(metadata)
-            return {"message": "Preprocessed dataset deleted successfully by Raw Dataset"}, 200
+            return {"error": "Preprocessed dataset deleted successfully by Raw Dataset"}, 200
 
         if dataset["name"] == "default":
-            return {"message": "Default preprocessed dataset cannot be deleted", "error": True}, 403
+            return {"error": "Default preprocessed dataset cannot be deleted"}, 403
 
         os.remove(dataset["path"])
         metadata = [d for d in metadata if d["id"] != dataset_id]
@@ -150,14 +150,14 @@ class PreprocessService:
         dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
         if not dataset:
-            return {"message": "Preprocessed dataset not found", "error": True}, 404
+            return {"error": "Preprocessed dataset not found"}, 404
 
         if dataset["name"] == "default":
-            return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
+            return {"error": "Default preprocessed dataset cannot be edited"}, 403
 
         df = pd.read_csv(dataset["path"], sep=",")
         if index >= len(df):
-            return {"message": "Data not found", "error": True}, 404
+            return {"error": "Data not found"}, 404
 
         df.at[index, "topik"] = new_label
         df.at[index, "preprocessedContent"] = new_preprocessed_content
@@ -165,7 +165,7 @@ class PreprocessService:
         result = self.update_preprocessed_dataset(dataset_id, df)
 
         if not result:
-            return {"message": "Failed to update data", "error": True}, 500
+            return {"error": "Failed to update data"}, 500
         return {"message": "Data updated successfully"}, 200
 
     def delete_data(self, dataset_id, index):
@@ -173,19 +173,19 @@ class PreprocessService:
         dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
         if not dataset:
-            return {"message": "Preprocessed dataset not found", "error": True}, 404
+            return {"error": "Preprocessed dataset not found"}, 404
 
         if dataset["name"] == "default":
-            return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
+            return {"error": "Default preprocessed dataset cannot be edited"}, 403
 
         df = pd.read_csv(dataset["path"], sep=",")
         if index >= len(df):
-            return {"message": "Data not found", "error": True}, 404
+            return {"error": "Data not found"}, 404
 
         df = df.drop(index).reset_index(drop=True)
         result = self.update_preprocessed_dataset(dataset_id, df)
         if not result:
-            return {"message": "Failed to delete data", "error": True}, 500
+            return {"error": "Failed to delete data"}, 500
         return {"message": "Data deleted successfully"}, 200
 
     def add_data(self, dataset_id, contentSnippet, topik):
@@ -193,10 +193,10 @@ class PreprocessService:
         dataset = next((d for d in metadata if d["id"] == dataset_id), None)
 
         if not dataset:
-            return {"message": "Preprocessed dataset not found", "error": True}, 404
+            return {"error": "Preprocessed dataset not found"}, 404
 
         if dataset["name"] == "default":
-            return {"message": "Default preprocessed dataset cannot be edited", "error": True}, 403
+            return {"error": "Default preprocessed dataset cannot be edited"}, 403
 
         df = pd.read_csv(dataset["path"], sep=",")
         preprocessedContent = self.text_preprocessor.preprocess(contentSnippet)
@@ -207,12 +207,12 @@ class PreprocessService:
         })
 
         if df["contentSnippet"].isin(new_data["contentSnippet"]).any() or df["preprocessedContent"].isin(new_data["preprocessedContent"]).any():
-            return {"message": "Data already exists", "error": True}, 409
+            return {"error": "Data already exists"}, 409
 
         df = pd.concat([df, new_data], ignore_index=True)
         result = self.update_preprocessed_dataset(dataset_id, df)
         if not result:
-            return {"message": "Failed to add data", "error": True}, 500
+            return {"error": "Failed to add data"}, 500
         return {"message": "Data added successfully"}, 201
 
     def update_preprocessed_dataset(self, dataset_id, df):
