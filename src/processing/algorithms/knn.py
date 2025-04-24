@@ -40,6 +40,7 @@ class CustomKNN:
         self.indices_ = indices
 
         predictions = []
+        reasons = []
         for i, (dist, idx) in enumerate(zip(distances, indices)):
             labels = self.y_train[idx]
             label_weights = defaultdict(float)
@@ -53,6 +54,7 @@ class CustomKNN:
 
             if len(top_labels) == 1:
                 predictions.append(top_labels[0])
+                reasons.append("Top Label")
             else:
                 # === Custom tie-breaking ===
                 tfidf_means = {}
@@ -74,6 +76,7 @@ class CustomKNN:
                     lbl for lbl in top_labels if tfidf_means[lbl] == max_mean]
                 if len(top_mean) == 1:
                     predictions.append(top_mean[0])
+                    reasons.append(f"Top TF-IDF Mean: {max_mean}")
                     continue
 
                 max_total = max(tfidf_totals.values())
@@ -81,6 +84,7 @@ class CustomKNN:
                     lbl for lbl in top_mean if tfidf_totals[lbl] == max_total]
                 if len(top_total) == 1:
                     predictions.append(top_total[0])
+                    reasons.append(f"Top TF-IDF Total: {max_total}")
                     continue
 
                 max_words = max(word_counts.values())
@@ -88,14 +92,22 @@ class CustomKNN:
                     lbl for lbl in top_total if word_counts[lbl] == max_words]
                 if len(top_words) == 1:
                     predictions.append(top_words[0])
+                    reasons.append(f"Top Word Count: {max_words}")
                     continue
 
                 max_docs = max(doc_counts.values())
                 top_docs = [
                     lbl for lbl in top_words if doc_counts[lbl] == max_docs]
-                predictions.append(top_docs[0])
+                if len(top_docs) == 1:
+                    predictions.append(top_docs[0])
+                    reasons.append(f"Top Document Count: {max_docs}")
+                    continue
 
-        return np.array(predictions)
+                # === End custom tie-breaking ===
+                predictions.append(top_labels[0])
+                reasons.append("Top Label")
+
+        return np.array(predictions), np.array(reasons)
 
     def score(self, X, y):
         return self.model.score(X, y)

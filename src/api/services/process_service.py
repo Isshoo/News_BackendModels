@@ -49,7 +49,7 @@ class ProcessService:
         df = pd.read_csv(preprocessed_dataset_path, sep=",")
 
         trainer = HybridModelTrainer(preprocessed_dataset_path)
-        hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors = trainer.train(
+        hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results = trainer.train(
             n_neighbors, split_size)
         split_results = self.split_dataset(
             preprocessed_dataset_path, split_size)
@@ -107,6 +107,10 @@ class ProcessService:
         # Neighbors
         df_neighbors.to_csv(os.path.join(
             model_meta_dir, "neighbors.csv"), index=False)
+
+        # Predict Results
+        df_predict_results.to_csv(os.path.join(
+            model_meta_dir, "predict_results.csv"), index=False)
 
         return model_metadata
 
@@ -192,6 +196,24 @@ class ProcessService:
     def neighbors(self, model_id, page=1, limit=10):
         model_dir = os.path.join("src/storage/metadatas/models", model_id)
         file_path = os.path.join(model_dir, "neighbors.csv")
+        if not os.path.exists(file_path):
+            return None
+
+        df = pd.read_csv(file_path)
+        start = (page - 1) * limit
+        end = start + limit
+
+        return {
+            "data": df.iloc[start:end].to_dict(orient="records"),
+            "total_data": len(df),
+            "total_pages": (len(df) + limit - 1) // limit,
+            "current_page": page,
+            "limit": limit,
+        }
+
+    def predict_results(self, model_id, page=1, limit=10):
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        file_path = os.path.join(model_dir, "predict_results.csv")
         if not os.path.exists(file_path):
             return None
 

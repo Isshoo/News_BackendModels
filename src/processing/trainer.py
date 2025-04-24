@@ -40,17 +40,9 @@ class HybridModelTrainer:
         word_stats_df = hybrid_model.get_word_stats()
 
         tfidf_stats = hybrid_model.get_tfidf_word_stats(X_train)
-        # Set selisih word stats dan tf-idf
-        word_stats_set = set(word_stats_df['word'])
-        tfidf_set = set(tfidf_stats['word'])
-
-        # Cari kata yang ada di word_stats tapi tidak di tf-idf
-        missing_in_tfidf = word_stats_set - tfidf_set
-
-        print("Kata yang tidak ada di TF-IDF:", missing_in_tfidf)
 
         # Prediksi hasil
-        y_pred = hybrid_model.predict(X_test)
+        y_pred, y_pred_reason = hybrid_model.predict(X_test)
 
         # Ambil vektor untuk X_test
         X_test_vectors = hybrid_model.vectorizer.transform(X_test)
@@ -65,6 +57,7 @@ class HybridModelTrainer:
                 "test_text": raw_test[i],
                 "predicted_label": le.inverse_transform([y_pred[i]])[0],
                 "true_label": le.inverse_transform([y_test[i]])[0],
+                "reason": y_pred_reason[i],
                 "neighbors": neighbors
             })
 
@@ -77,6 +70,7 @@ class HybridModelTrainer:
                     "test_text": item["test_text"],
                     "predicted_label": item["predicted_label"],
                     "true_label": item["true_label"],
+                    "reason": item["reason"],
                     "neighbor_index": neighbor["index"],
                     "neighbor_label": map_classification_result(neighbor["label"]),
                     "neighbor_distance": neighbor["distance"],
@@ -85,10 +79,24 @@ class HybridModelTrainer:
 
         df_neighbors = pd.DataFrame(rows)
 
+        # Buat DataFrame hasil prediksi
+        predict_results = []
+        for i in range(len(X_test)):
+            predict_results.append({
+                "index": i,
+                "text": raw_test[i],
+                "true_label": le.inverse_transform([y_test[i]])[0],
+                "predicted_label": le.inverse_transform([y_pred[i]])[0],
+                "predict_by": y_pred_reason[i],
+                "is_correct": le.inverse_transform([y_test[i]])[0] == le.inverse_transform([y_pred[i]])[0]
+            })
+
+        df_predict_results = pd.DataFrame(predict_results)
+
         # Evaluasi model
         evaluation_results = evaluate_model(y_test, y_pred)
 
-        return hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors
+        return hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results
 
     def train_with_gridsearch(self, param_grid=None):
         """Melatih model Hybrid C5.0-KNN dengan Grid Search untuk mencari parameter terbaik"""

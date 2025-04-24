@@ -28,3 +28,5 @@ process_bp.route("/process/model/<model_id>/tfidf-stats",
                  methods=["GET"])(process_controller.fetch_tfidf_stats)
 process_bp.route("/process/model/<model_id>/neighbors",
                  methods=["GET"])(process_controller.fetch_neighbors)
+process_bp.route("/process/model/<model_id>/predict-results",
+                 methods=["GET"])(process_controller.fetch_predict_results)

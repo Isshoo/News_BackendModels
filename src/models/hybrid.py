@@ -40,6 +40,7 @@ class HybridClassifier:
 
         X_test_vectors = self.vectorizer.transform(X_test)
         predictions = []
+        reasons = []
 
         for i, text in enumerate(X_test):
             # C5 prediksi awal dengan confidence
@@ -48,13 +49,17 @@ class HybridClassifier:
             if label is not None and confidence >= self.c5_threshold:
                 # Gunakan C5 jika confidence cukup tinggi
                 predictions.append(label)
+                reasons.append("C5.0 Decision")
             else:
                 # Gunakan KNN jika confidence rendah atau tidak ada hasil dari C5
-                knn_prediction = self.knn.predict(
-                    X_test_vectors[i].reshape(1, -1))[0]
+                knn_preds, knn_reasons = self.knn.predict(
+                    X_test_vectors[i].reshape(1, -1))
+                knn_prediction = knn_preds[0]
+                knn_reason = knn_reasons[0]
                 predictions.append(knn_prediction)
+                reasons.append(f'KNN {knn_reason}')
 
-        return predictions
+        return predictions, reasons
 
     def get_word_stats(self):
         """Mengembalikan dataframe statistik kata dari model C5"""

@@ -269,3 +269,15 @@ class ProcessController:
             return jsonify(result)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    def fetch_predict_results(self, model_id):
+        try:
+            page = int(request.args.get("page", 1))
+            limit = int(request.args.get("limit", 10))
+            result = self.process_service.predict_results(
+                model_id, page, limit)
+            if not result:
+                return jsonify({"error": "Predict results not found"}), 404
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
