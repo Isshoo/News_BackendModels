@@ -22,6 +22,16 @@ class NewsClassifier:
     def classify(self, sample_text, max_retries=2):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """
         processed_sample_text = self.text_preprocessor.preprocess(sample_text)
+        print(f"Preprocessed Text: {processed_sample_text}")
+
+        # jika hasil preprocess ksosng
+        if not processed_sample_text:
+            return {
+                "Preprocessed_Text": processed_sample_text,
+                "Hybrid_C5_KNN": "Unknown",
+                "DeepSeek": "Unknown",
+                "model_error": f"Failed to preprocess text: '{sample_text}'"
+            }
 
         try:
             hasil_model_hybrid, reasons = self.hybrid_model.predict(
@@ -31,6 +41,7 @@ class NewsClassifier:
         except Exception as e:
             print(f"❌ Error pada model Hybrid: {e}")
             hasil_model_hybrid = "Unknown"
+            hybrid_error = f"Hybrid Model Error: {e}"
 
         for attempt in range(max_retries):
             try:
@@ -38,10 +49,18 @@ class NewsClassifier:
                     processed_sample_text, use_api=True)
                 if hasil_deepseek in self.valid_categories:
                     hasil_deepseek = map_classification_result(hasil_deepseek)
+                    if hasil_model_hybrid != "Unknown":
+                        return {
+                            "Preprocessed_Text": processed_sample_text,
+                            "Hybrid_C5_KNN": hasil_model_hybrid,
+                            "DeepSeek": hasil_deepseek,
+                            "model_error": ""
+                        }
                     return {
                         "Preprocessed_Text": processed_sample_text,
                         "Hybrid_C5_KNN": hasil_model_hybrid,
-                        "DeepSeek": hasil_deepseek
+                        "DeepSeek": hasil_deepseek,
+                        "model_error": f"{hybrid_error}"
                     }
             except Exception as e:
                 print(f"❌ Error pada DeepSeek: {e}")
@@ -53,7 +72,8 @@ class NewsClassifier:
         return {
             "Preprocessed_Text": processed_sample_text,
             "Hybrid_C5_KNN": hasil_model_hybrid,
-            "DeepSeek": "Unknown"
+            "DeepSeek": "-",
+            "model_error": f"{hybrid_error} & Deepseek Rate Limit Exceeded"
         }
 
     def classify_csv(self, csv_file_path):
@@ -73,6 +93,7 @@ class NewsClassifier:
             preprocessed_texts = []
             hybrid_results = []
             deepseek_results = []
+            errors = []
 
             # Looping per baris untuk klasifikasi
             for text in df["contentSnippet"]:
@@ -80,11 +101,13 @@ class NewsClassifier:
                 preprocessed_texts.append(result["Preprocessed_Text"])
                 hybrid_results.append(result["Hybrid_C5_KNN"])
                 deepseek_results.append(result["DeepSeek"])
+                errors.append(result["model_error"])
 
             # Tambahkan hasil ke dataframe
             df["Preprocessed_Text"] = preprocessed_texts
             df["Hybrid_C5_KNN"] = hybrid_results
             df["DeepSeek"] = deepseek_results
+            df["model_error"] = errors
 
             return df.to_dict(orient="records")
 

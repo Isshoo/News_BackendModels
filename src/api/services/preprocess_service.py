@@ -1,5 +1,6 @@
 import os
 import json
+import string
 import csv
 import uuid
 import pandas as pd
@@ -159,6 +160,18 @@ class PreprocessService:
         if index >= len(df):
             return {"error": "Data not found"}, 404
 
+        # cek jika data hanya 1 huruf
+        if len(new_preprocessed_content) == 1:
+            return {"error": "Data must be at least 2 characters"}, 400
+
+        for word in new_preprocessed_content.split():
+            if word.isdigit():
+                return {"error": f"Data cannot contain word with only number: '{word}'"}, 400
+            elif word in string.punctuation:
+                return {"error": f"Data cannot contain word with only punctuation character: '{word}'"}, 400
+            elif all(char in string.punctuation for char in word):
+                return {"error": f"Data cannot contain word with only punctuation characters: '{word}'"}, 400
+
         df.at[index, "topik"] = new_label
         df.at[index, "preprocessedContent"] = new_preprocessed_content
 
@@ -200,6 +213,8 @@ class PreprocessService:
 
         df = pd.read_csv(dataset["path"], sep=",")
         preprocessedContent = self.text_preprocessor.preprocess(contentSnippet)
+        if preprocessedContent is None:
+            return {"error": "Content is empty after preprocessing"}, 500
         new_data = pd.DataFrame({
             "contentSnippet": [contentSnippet],
             "preprocessedContent": [preprocessedContent],

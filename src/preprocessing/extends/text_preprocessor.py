@@ -91,6 +91,9 @@ class TextPreprocessor(Preprocessor):
     def preprocess(self, text):
         print(f"Text Awal: {text}")
 
+        if text == '':
+            return None
+
         # Case Folding: Ubah semua teks menjadi huruf kecil
         text = text.lower()
 
@@ -110,6 +113,11 @@ class TextPreprocessor(Preprocessor):
         text = re.sub(r"[^\w\s]", " ", text)
         text = re.sub(r"\b(\w+)([- ]\1)+\b", r"\1", text)
 
+        text_cleaned = text
+
+        if text_cleaned.strip() == '' or len(text_cleaned.strip()) < 2:
+            return
+
         # Tokenisasi
         # tokens = [t for t in nltk.word_tokenize(
         #     text) if len(t) > 1]
@@ -117,6 +125,9 @@ class TextPreprocessor(Preprocessor):
         tokens = [t for t in nltk.word_tokenize(
             text) if t not in self.stop_words if len(t) > 1]
         text = " ".join(tokens)
+
+        if text == '':
+            text = text_cleaned
 
         # Lindungi kata-kata khusus agar tidak dilemmatize
         text, protected_map = self.auto_protect_keywords(text)
@@ -137,6 +148,10 @@ class TextPreprocessor(Preprocessor):
 
         # Kembalikan teks yang telah diproses
         print(f"Text Setelah: {text}")
+
+        if text == '':
+            return text_cleaned
+
         return text
 
 
@@ -151,7 +166,13 @@ if __name__ == "__main__":
         "Poco meluncurkan X7 Series yang beranggotakan X7 5G dan X7 Pro 5G. Ponsel kelas midrange ini dibanderol dengan harga mulai dari Rp3,799 juta.",
         "Rupiah ditutup di level Rp16.595 per dolar AS pada Jumat (28/2) sering-sering amp;nbsp;turun 141 poin&amp;nbsp; atau minus 0,86 persen dibandingkan penutupan perdagangan sebelumnya ke-2 data-set",
         "Practice MotoGP Thailand: Alex Marquez Tercepat, Bagnaia Gagal ke Q2 - Alex Marquez mengalahkan Marc Marquez pada sesi practice MotoGP Thailand 2025. Sementara Francesco Bagnaia gagal lolos otomatis ke Q2 babak kualifikasi.",
-        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17,bertanya-tanya Ramadhan Marc Marquez proyek-proyek menyalahkan menikah banyak-banyak padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
+        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17,bertanya-tanya Ramadhan Marc Marquez proyek-proyek menyalahkan menikah banyak-banyak padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')",
+        "Berikut cara-cara yang bisa digunakan.",
+        "5g!!!!",
+        "81723!!...",
+        "a!!!!!",
+        "aa!!!!!",
+        "aaa!!!!!"
     ]
     # hitung watu pemrosesan
     start_time = time.time()
@@ -159,6 +180,7 @@ if __name__ == "__main__":
     for i, text in enumerate(samples, 1):
         print(f"\n--- Sample {i} ---")
         result = preprocessor.preprocess(text)
+        print(f"Hasil: {result}")
 
     end_time = time.time()
     print(f"\nTotal waktu pemrosesan: {end_time - start_time:.2f} detik")

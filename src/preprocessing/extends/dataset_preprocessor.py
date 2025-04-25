@@ -36,6 +36,7 @@ class DatasetPreprocessor(Preprocessor):
             self.text_preprocessor.preprocess)
 
         df.drop_duplicates(subset=["preprocessedContent"], inplace=True)
+        df.dropna(subset=["preprocessedContent"], inplace=True)
 
         return df
 
@@ -47,6 +48,7 @@ class DatasetPreprocessor(Preprocessor):
         df['contentSnippet'] = df['contentSnippet'].str.replace('"', "'")
 
         df.drop_duplicates(subset=["contentSnippet"], inplace=True)
+        df.dropna(subset=["contentSnippet"], inplace=True)
 
         # Simpan sebagai CSV dengan format yang benar
         df.to_csv("./src/storage/datasets/base/raw_news_dataset.csv",
