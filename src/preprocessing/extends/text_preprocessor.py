@@ -150,7 +150,8 @@ if __name__ == "__main__":
         "Hillstate menelan kekalahan 1-3 (21-25, 25-13, 21-25, 17-25) dari Hi Pass dalam pertandingan Liga Voli Korea Selatan, Kamis (27/2).",
         "Poco meluncurkan X7 Series yang beranggotakan X7 5G dan X7 Pro 5G. Ponsel kelas midrange ini dibanderol dengan harga mulai dari Rp3,799 juta.",
         "Rupiah ditutup di level Rp16.595 per dolar AS pada Jumat (28/2) sering-sering amp;nbsp;turun 141 poin&amp;nbsp; atau minus 0,86 persen dibandingkan penutupan perdagangan sebelumnya ke-2 data-set",
-        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17,bertanya-tanya proyek-proyek menyalahkan menikah banyak-banyak padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
+        "Practice MotoGP Thailand: Alex Marquez Tercepat, Bagnaia Gagal ke Q2 - Alex Marquez mengalahkan Marc Marquez pada sesi practice MotoGP Thailand 2025. Sementara Francesco Bagnaia gagal lolos otomatis ke Q2 babak kualifikasi.",
+        "Rp12.500,00 dibayar ke-3 kalinya oleh tim U-17,bertanya-tanya Ramadhan Marc Marquez proyek-proyek menyalahkan menikah banyak-banyak padahal penurunan menurun x7-Xtreme! Ini bukan mendapat mendapatkan jadi sangat hoax!!! Namun... ehm, pada akhirnya: #timnas @indonesia menang di stadion 5G (Super-Speed). IDR3.00 IDR3,00 IDR 3,00:')"
     ]
     # hitung watu pemrosesan
     start_time = time.time()

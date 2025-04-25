@@ -24,8 +24,9 @@ class NewsClassifier:
         processed_sample_text = self.text_preprocessor.preprocess(sample_text)
 
         try:
-            hasil_model_hybrid = self.hybrid_model.predict(
-                [processed_sample_text])[0]
+            hasil_model_hybrid, reasons = self.hybrid_model.predict(
+                [processed_sample_text])
+            hasil_model_hybrid = hasil_model_hybrid[0]
             hasil_model_hybrid = map_classification_result(hasil_model_hybrid)
         except Exception as e:
             print(f"❌ Error pada model Hybrid: {e}")

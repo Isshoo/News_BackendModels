@@ -65,9 +65,10 @@ class CustomKNN:
                     docs = [self.original_docs[j] for j in range(
                         len(self.y_train)) if self.y_train[j] == label]
                     tfidf_vectors = self.vectorizer.transform(docs)
+                    array = tfidf_vectors.toarray()
 
-                    tfidf_means[label] = tfidf_vectors.mean()
-                    tfidf_totals[label] = tfidf_vectors.sum()
+                    tfidf_means[label] = array.mean()
+                    tfidf_totals[label] = array.sum()
                     word_counts[label] = sum(len(doc.split()) for doc in docs)
                     doc_counts[label] = len(docs)
 
@@ -105,7 +106,7 @@ class CustomKNN:
 
                 # === End custom tie-breaking ===
                 predictions.append(top_labels[0])
-                reasons.append("Top Label")
+                reasons.append("Top Label Default")
 
         return np.array(predictions), np.array(reasons)
 
