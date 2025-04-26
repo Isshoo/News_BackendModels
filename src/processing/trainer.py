@@ -50,16 +50,18 @@ class HybridModelTrainer:
         # Hitung tetangga terdekat untuk setiap data uji
         all_neighbors = []
         for i in range(len(X_test)):
-            neighbors = hybrid_model.knn.get_neighbors_info(
-                X_test_vectors[i], k=n_neighbors)[0]
-            all_neighbors.append({
-                "test_index": i,
-                "test_text": raw_test[i],
-                "predicted_label": le.inverse_transform([y_pred[i]])[0],
-                "true_label": le.inverse_transform([y_test[i]])[0],
-                "reason": y_pred_reason[i],
-                "neighbors": neighbors
-            })
+            # hanya simpan kalau diprediksi oleh KNN
+            if y_pred_reason[i].startswith("KNN"):
+                neighbors = hybrid_model.knn.get_neighbors_info(
+                    X_test_vectors[i], k=n_neighbors)[0]
+                all_neighbors.append({
+                    "test_index": i,
+                    "test_text": raw_test[i],
+                    "predicted_label": le.inverse_transform([y_pred[i]])[0],
+                    "true_label": le.inverse_transform([y_test[i]])[0],
+                    "reason": y_pred_reason[i],
+                    "neighbors": neighbors
+                })
 
         # Konversi ke DataFrame
         rows = []

@@ -274,8 +274,11 @@ class ProcessController:
         try:
             page = int(request.args.get("page", 1))
             limit = int(request.args.get("limit", 10))
+            predict_by = request.args.get("predict_by", None)
+
             result = self.process_service.predict_results(
-                model_id, page, limit)
+                model_id, page, limit, predict_by=predict_by)
+
             if not result:
                 return jsonify({"error": "Predict results not found"}), 404
             return jsonify(result)

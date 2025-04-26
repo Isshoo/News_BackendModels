@@ -211,22 +211,36 @@ class ProcessService:
             "limit": limit,
         }
 
-    def predict_results(self, model_id, page=1, limit=10):
+    def predict_results(self, model_id, page=1, limit=10, predict_by=None):
         model_dir = os.path.join("src/storage/metadatas/models", model_id)
         file_path = os.path.join(model_dir, "predict_results.csv")
         if not os.path.exists(file_path):
             return None
 
         df = pd.read_csv(file_path)
+
+        # Hitung total C5.0 dan KNN
+        total_c5 = len(df[df["predict_by"] == "C5.0 Decision"])
+        total_knn = len(df[df["predict_by"].str.startswith("KNN")])
+
+        # Filter by prediction method
+        if predict_by == "knn":
+            df = df[df["predict_by"].str.contains("KNN", na=False)]
+        elif predict_by == "c5":
+            df = df[df["predict_by"] == "C5.0 Decision"]
+
         start = (page - 1) * limit
         end = start + limit
 
         return {
             "data": df.iloc[start:end].to_dict(orient="records"),
             "total_data": len(df),
+            "total_c5": total_c5,
+            "total_knn": total_knn,
             "total_pages": (len(df) + limit - 1) // limit,
             "current_page": page,
             "limit": limit,
+            "predict_by": predict_by
         }
 
     def get_parameters(self, model_id):
