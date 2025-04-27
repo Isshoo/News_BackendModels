@@ -175,7 +175,7 @@ if __name__ == "__main__":
                             weights="distance", p=2, algorithm="auto")
             knn.fit(X_train, y_train, original_docs=raw_train,
                     vectorizer=tfidf_vectorizer, label_encoder=le)
-            predictions = knn.predict(X_test)
+            predictions, _ = knn.predict(X_test)
             accuracy = accuracy_score(y_test, predictions)
 
             print(

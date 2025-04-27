@@ -151,7 +151,7 @@ class HybridModelTrainer:
             train_duration = time.time() - start_time
 
             # Prediksi hasil
-            y_pred = hybrid_model.predict(X_test)
+            y_pred, _ = hybrid_model.predict(X_test)
 
             # Evaluasi model
             evaluation_results = evaluate_model(y_test, y_pred)
