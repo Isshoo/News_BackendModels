@@ -43,18 +43,34 @@ class CustomKNN:
         reasons = []
         for i, (dist, idx) in enumerate(zip(distances, indices)):
             labels = self.y_train[idx]
-            label_weights = defaultdict(float)
-            for label, d in zip(labels, dist):
-                weight = 1 / d if d != 0 else 1e9
-                label_weights[label] += weight
+            # Cek mode: uniform atau distance
+            if self.model.weights == "uniform":
+                # Mode uniform → voting biasa (jumlah terbanyak)
+                label_counts = defaultdict(int)
+                for label in labels:
+                    label_counts[label] += 1
 
-            max_weight = max(label_weights.values())
-            top_labels = [lbl for lbl, wt in label_weights.items()
-                          if wt == max_weight]
+                max_count = max(label_counts.values())
+                top_labels = [lbl for lbl, cnt in label_counts.items()
+                              if cnt == max_count]
+
+                base_reason = "Top Vote Count"
+            else:
+                # Mode distance → bobot berdasarkan jarak
+                label_weights = defaultdict(float)
+                for label, d in zip(labels, dist):
+                    weight = 1 / d if d != 0 else 1e9
+                    label_weights[label] += weight
+
+                max_weight = max(label_weights.values())
+                top_labels = [lbl for lbl, wt in label_weights.items()
+                              if wt == max_weight]
+
+                base_reason = "Top Distance Weight"
 
             if len(top_labels) == 1:
                 predictions.append(top_labels[0])
-                reasons.append("Top Label")
+                reasons.append(base_reason)
             else:
                 # === Custom tie-breaking ===
                 tfidf_means = {}
@@ -136,10 +152,11 @@ class CustomKNN:
 
 
 if __name__ == "__main__":
-    max_features_options = [3500, 4000, 4250, 4750, 5000, None]
+    max_features_options = [None]
     test_size_options = [0.2, 0.25, 0.3]
-    random_state_options = [4, 42, 100]
-    n_neighbors_options = [3, 5, 7, 9, 11]
+    random_state_options = [42, 100]
+    n_neighbors_options = [5, 7, 9, 11]
+    weights_options = ["distance", "uniform"]
 
     dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset3_original_preprocessed.csv"
     df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
@@ -152,9 +169,8 @@ if __name__ == "__main__":
     le = LabelEncoder()
     y_encoded = le.fit_transform(y_raw)
 
-    best_overall_accuracy = 0.0
-    best_overall_config = None
-    best_model = None
+    # Menyimpan hasil evaluasi per konfigurasi
+    evaluation_results = []
 
     start_time = time.time()
     print("Mulai evaluasi...")
@@ -170,34 +186,49 @@ if __name__ == "__main__":
             X_tfidf, y_encoded, X_raw, test_size=test_sz, stratify=y_encoded, random_state=rand_st
         )
 
-        for n_neighbors in n_neighbors_options:
+        for n_neighbors, weights in product(n_neighbors_options, weights_options):
             knn = CustomKNN(n_neighbors=n_neighbors,
-                            weights="distance", p=2, algorithm="auto")
+                            weights=weights, p=2, algorithm="auto")
+
+            train_start_time = time.time()
             knn.fit(X_train, y_train, original_docs=raw_train,
                     vectorizer=tfidf_vectorizer, label_encoder=le)
+            train_duration = time.time() - train_start_time
+
             predictions, _ = knn.predict(X_test)
             accuracy = accuracy_score(y_test, predictions)
 
-            print(
-                f"    → Akurasi: {accuracy:.2%} | n_neighbors={n_neighbors}, weights=distance, p=2")
-
-            if accuracy > best_overall_accuracy:
-                best_overall_accuracy = accuracy
-                best_overall_config = {
-                    "max_features": max_feat,
+            # Menyimpan hasil evaluasi untuk setiap konfigurasi
+            evaluation_results.append({
+                "accuracy": accuracy,
+                "params": {
                     "test_size": test_sz,
+                    "n_neighbors": n_neighbors,
+                    "weights": weights,
                     "random_state": rand_st,
-                    "knn_params": {
-                        "n_neighbors": n_neighbors,
-                        "weights": "distance",
-                        "p": 2
-                    }
+                    "train_duration": train_duration,
+                    "max_features": max_feat,
                 }
-                best_model = knn
+            })
 
+            print(
+                f"    → Akurasi: {accuracy:.2%} | n_neighbors={n_neighbors}, weights={weights}, p=2")
+
+    # Urutkan hasil evaluasi berdasarkan akurasi tertinggi
+    sorted_results = sorted(
+        evaluation_results, key=lambda x: x["accuracy"], reverse=True)
+
+    # Tampilkan hasil ranking
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"\nWaktu eksekusi: {elapsed_time:.2f} detik")
-    print("\n=== Model Terbaik Secara Keseluruhan ===")
-    print(f"Konfigurasi: {best_overall_config}")
-    print(f"Akurasi: {best_overall_accuracy:.2%}")
+
+    print("\n=== Ranking Model Berdasarkan Akurasi ===")
+    print("Rank\tAccuracy\tTest Size\tN_Neighbors\tWeights\t\tRandom State\tTrain Duration\tMax Features")
+    print(
+        "----\t--------\t---------\t----------\t--------\t------------\t------------\t-------------")
+    for i, result in enumerate(sorted_results, 1):
+        accuracy = result["accuracy"]
+        params = result["params"]
+        print(
+            f"{i}\t{accuracy:.4f}\t\t{params['test_size']}\t\t{params['n_neighbors']}\t\t{params['weights']}\t\t{params['random_state']}\t\t{params['train_duration']:.2f}s\t\t{params['max_features']}")
