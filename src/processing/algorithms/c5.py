@@ -160,7 +160,7 @@ class CustomC5:
 # CUSTOM C5
 if __name__ == "__main__":
     # Muat dataset
-    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset_preprocessed_stemmed.csv"
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset3_original_preprocessed.csv"
     df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
 
     if df.empty:
@@ -176,7 +176,9 @@ if __name__ == "__main__":
     # Parameter grid
     param_grid = {
         'test_size': [0.2, 0.25],
-        'random_state': [42, 100]
+        'random_state': [42, 100],
+        'min_df': [0, 1, 2],  # Parameter min_df yang ditambahkan
+        'max_df_ratio': [0.7, 1.0]  # Parameter max_df_ratio yang ditambahkan
     }
 
     grid = ParameterGrid(param_grid)
@@ -190,14 +192,16 @@ if __name__ == "__main__":
     for i, params in enumerate(grid, 1):
         test_size = params['test_size']
         random_state = params['random_state']
+        min_df = params['min_df']
+        max_df_ratio = params['max_df_ratio']
 
         # Bagi data
         X_train, X_test, y_train, y_test = train_test_split(
             X_texts, y_encoded, test_size=test_size, stratify=y_encoded, random_state=random_state
         )
 
-        # Inisialisasi model
-        c5 = CustomC5()
+        # Inisialisasi model dengan min_df dan max_df_ratio
+        c5 = CustomC5(min_df=min_df, max_df_ratio=max_df_ratio)
 
         start_time = time.time()
         c5.fit(X_train, y_train)
@@ -215,7 +219,7 @@ if __name__ == "__main__":
         predictions = [p for p in predictions if p is not None]
         acc = accuracy_score(y_test[:len(predictions)], predictions)
 
-        print(f"[{i}/{len(grid)}] test_size={test_size}, random_state={random_state} → Akurasi: {acc:.2%} | Waktu latih: {train_duration:.2f}s")
+        print(f"[{i}/{len(grid)}] test_size={test_size}, random_state={random_state}, min_df={min_df}, max_df_ratio={max_df_ratio} → Akurasi: {acc:.2%} | Waktu latih: {train_duration:.2f}s")
 
         all_results.append({
             'params': params,
@@ -227,10 +231,25 @@ if __name__ == "__main__":
             best_score = acc
             best_params = params
 
-        df_stats = pd.DataFrame(c5.word_stats)
-        print(df_stats.head(10))
+    # Urutkan hasil evaluasi berdasarkan akurasi tertinggi
+    sorted_results = sorted(
+        all_results, key=lambda x: x['accuracy'], reverse=True)
+
+    # Tampilkan hasil ranking
+    print("\n=== Ranking Model Berdasarkan Akurasi ===")
+    print("Rank\tAccuracy\tTest Size\tRandom State\tMin DF\tMax DF Ratio\tTrain Duration")
+    print(
+        "----\t--------\t---------\t------------\t------\t------------\t--------------")
+
+    for i, result in enumerate(sorted_results, 1):
+        accuracy = result['accuracy']
+        params = result['params']
+        print(
+            f"{i}\t{accuracy:.4f}\t\t{params['test_size']}\t\t{params['random_state']}\t\t{params['min_df']}\t{params['max_df_ratio']}\t{result['train_time']:.2f}s")
 
     print("\n✅ Parameter terbaik ditemukan:")
     print(f"  test_size: {best_params['test_size']}")
     print(f"  random_state: {best_params['random_state']}")
+    print(f"  min_df: {best_params['min_df']}")
+    print(f"  max_df_ratio: {best_params['max_df_ratio']}")
     print(f"  Akurasi terbaik: {best_score:.2%}")
