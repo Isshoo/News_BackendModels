@@ -54,7 +54,7 @@ class CustomKNN:
                 top_labels = [lbl for lbl, cnt in label_counts.items()
                               if cnt == max_count]
 
-                base_reason = "Top Vote Count"
+                base_reason = "Label Count"
             else:
                 # Mode distance → bobot berdasarkan jarak
                 label_weights = defaultdict(float)
@@ -66,7 +66,7 @@ class CustomKNN:
                 top_labels = [lbl for lbl, wt in label_weights.items()
                               if wt == max_weight]
 
-                base_reason = "Top Distance Weight"
+                base_reason = "Label Distance"
 
             if len(top_labels) == 1:
                 predictions.append(top_labels[0])
@@ -93,7 +93,7 @@ class CustomKNN:
                     lbl for lbl in top_labels if tfidf_means[lbl] == max_mean]
                 if len(top_mean) == 1:
                     predictions.append(top_mean[0])
-                    reasons.append(f"Top TF-IDF Mean: {max_mean}")
+                    reasons.append(f"TF-IDF Mean: {max_mean}")
                     continue
 
                 max_total = max(tfidf_totals.values())
@@ -101,7 +101,7 @@ class CustomKNN:
                     lbl for lbl in top_mean if tfidf_totals[lbl] == max_total]
                 if len(top_total) == 1:
                     predictions.append(top_total[0])
-                    reasons.append(f"Top TF-IDF Total: {max_total}")
+                    reasons.append(f"TF-IDF Total: {max_total}")
                     continue
 
                 max_words = max(word_counts.values())
@@ -109,7 +109,7 @@ class CustomKNN:
                     lbl for lbl in top_total if word_counts[lbl] == max_words]
                 if len(top_words) == 1:
                     predictions.append(top_words[0])
-                    reasons.append(f"Top Word Count: {max_words}")
+                    reasons.append(f"Word Count: {max_words}")
                     continue
 
                 max_docs = max(doc_counts.values())
@@ -117,12 +117,12 @@ class CustomKNN:
                     lbl for lbl in top_words if doc_counts[lbl] == max_docs]
                 if len(top_docs) == 1:
                     predictions.append(top_docs[0])
-                    reasons.append(f"Top Document Count: {max_docs}")
+                    reasons.append(f"Document Count: {max_docs}")
                     continue
 
                 # === End custom tie-breaking ===
                 predictions.append(top_labels[0])
-                reasons.append("Top Label Default")
+                reasons.append("Top Labels")
 
         return np.array(predictions), np.array(reasons)
 
