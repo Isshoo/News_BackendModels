@@ -33,6 +33,7 @@ class NewsClassifier:
                 "model_error": f"Failed to preprocess text: '{sample_text}'"
             }
 
+        hybrid_error = ""
         try:
             hasil_model_hybrid, reasons = self.hybrid_model.predict(
                 [processed_sample_text])
