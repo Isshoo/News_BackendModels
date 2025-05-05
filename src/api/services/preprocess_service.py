@@ -224,7 +224,7 @@ class PreprocessService:
         if df["contentSnippet"].isin(new_data["contentSnippet"]).any() or df["preprocessedContent"].isin(new_data["preprocessedContent"]).any():
             return {"error": "Data already exists"}, 409
 
-        df = pd.concat([df, new_data], ignore_index=True)
+        df = pd.concat([new_data, df], ignore_index=True)
         result = self.update_preprocessed_dataset(dataset_id, df)
         if not result:
             return {"error": "Failed to add data"}, 500
