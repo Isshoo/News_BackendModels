@@ -50,7 +50,8 @@ class DatasetService:
 
     def fetch_datasets(self):
         """ Mengambil semua dataset yang tersimpan """
-        return self._load_metadata()
+        metadata = self._load_metadata()
+        return sorted(metadata, key=lambda x: x["upload_at"], reverse=True)
 
     def fetch_dataset(self, dataset_id, page=1, limit=10):
         """ Mengambil dataset tertentu dengan paginasi """
