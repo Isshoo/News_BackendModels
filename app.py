@@ -1,15 +1,18 @@
-from flask import Flask
+from src.database import models  # Pastikan model dimuat
+from src.database.config import Base, engine
+from src.database.api.routes import db_routes_bp
+from src.api.routes import routes_bp
 from flask_cors import CORS
+from flask import Flask
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # Import Blueprint API default (src/api)
-from src.api.routes import routes_bp
 
 # Import Blueprint dari API DB alternatif (src/database/api)
-from src.database.api.routes import db_routes_bp
 
 # SQLAlchemy Base dan Engine (untuk migrasi, bukan init)
-from src.database.config import Base, engine
-from src.database import models  # Pastikan model dimuat
 
 
 def create_app():
