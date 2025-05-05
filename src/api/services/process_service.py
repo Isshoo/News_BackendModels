@@ -150,7 +150,8 @@ class ProcessService:
         return True
 
     def get_models(self):
-        return self.load_metadata()
+        metadata = self.load_metadata()
+        return sorted(metadata, key=lambda x: x["created_at"], reverse=True)
 
     def get_model(self, model_id):
         metadata = self.load_metadata()
