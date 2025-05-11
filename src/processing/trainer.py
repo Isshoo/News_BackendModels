@@ -14,6 +14,8 @@ class HybridModelTrainer:
         """Inisialisasi trainer dengan dataset dalam bentuk DataFrame"""
 
         self.df = pd.read_csv(dataset_path, sep=",", encoding="utf-8")
+        self.test_df = pd.read_csv(
+            "./src/storage/datasets/base/DataTesting2.csv", sep=",", encoding="utf-8")
 
         if self.df.empty:
             raise ValueError("Dataset kosong. Cek dataset Anda!")
@@ -98,7 +100,31 @@ class HybridModelTrainer:
         # Evaluasi model
         evaluation_results = evaluate_model(y_test, y_pred)
 
-        return hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results
+        # evaluasi testing
+        X_Testing = self.test_df["preprocessedContent"].values
+        Y_Testing = self.test_df["topik"].values
+
+        le_testing = LabelEncoder()
+        y_testing = le_testing.fit_transform(Y_Testing)
+
+        y_testing_pred, y_testing_pred_reason = hybrid_model.predict(X_Testing)
+
+        predict_results_testing = []
+        for i in range(len(X_Testing)):
+            predict_results_testing.append({
+                "index": i,
+                "text": X_Testing[i],
+                "true_label": le.inverse_transform([y_testing[i]])[0],
+                "predicted_label": le.inverse_transform([y_testing_pred[i]])[0],
+                "predict_by": y_testing_pred_reason[i],
+                "is_correct": le.inverse_transform([y_testing[i]])[0] == le.inverse_transform([y_testing_pred[i]])[0]
+            })
+
+        df_predict_results_testing = pd.DataFrame(predict_results_testing)
+
+        evaluation_results_testing = evaluate_model(y_testing, y_testing_pred)
+
+        return hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results, df_predict_results_testing, evaluation_results_testing
 
     def train_with_gridsearch(self, param_grid=None):
         """Melatih model Hybrid C5.0-KNN dengan Grid Search untuk mencari parameter terbaik"""
@@ -112,13 +138,13 @@ class HybridModelTrainer:
         # Default grid search parameters
         if param_grid is None:
             param_grid = {
-                "n_neighbors": [5, 7, 11],  # Coba beberapa nilai KNN
+                "n_neighbors": [5, 7, 9, 11],  # Coba beberapa nilai KNN
                 # Coba beberapa split train-test
-                "test_size": [0.2, 0.25],
+                "test_size": [0.2, 0.25, 0.3],
                 # Coba berbagai random state
                 "random_state": [42, 100],
                 # Coba beberapa split C5.0
-                "c5_threshold": [0.5, 0.65, 0.75],
+                "c5_threshold": [0.75],
                 # Coba beberapa nilai maksimum fitur
                 "max_features": [None]
             }
@@ -201,7 +227,7 @@ class HybridModelTrainer:
 
 
 if __name__ == "__main__":
-    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset3_original_preprocessed.csv"
+    dataset_path = "./src/storage/datasets/preprocessed/raw_news_dataset5_original_preprocessed.csv"
     trainer = HybridModelTrainer(dataset_path)
 
     # # Training model secara manual

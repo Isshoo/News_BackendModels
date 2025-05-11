@@ -49,7 +49,7 @@ class ProcessService:
         df = pd.read_csv(preprocessed_dataset_path, sep=",")
 
         trainer = HybridModelTrainer(preprocessed_dataset_path)
-        hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results = trainer.train(
+        hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results, df_predict_results_testing, evaluation_results_testing = trainer.train(
             n_neighbors, split_size)
         split_results = self.split_dataset(
             preprocessed_dataset_path, split_size)
@@ -96,6 +96,10 @@ class ProcessService:
         with open(os.path.join(model_meta_dir, "evaluation.json"), "w") as f:
             json.dump(evaluation_results, f, indent=4)
 
+        # Evaluation Testing
+        with open(os.path.join(model_meta_dir, "evaluation_testing.json"), "w") as f:
+            json.dump(evaluation_results_testing, f, indent=4)
+
         # Word Stats
         word_stats_df.to_csv(os.path.join(
             model_meta_dir, "word_stats.csv"), index=False)
@@ -111,6 +115,10 @@ class ProcessService:
         # Predict Results
         df_predict_results.to_csv(os.path.join(
             model_meta_dir, "predict_results.csv"), index=False)
+
+        # Predict Results Testing
+        df_predict_results_testing.to_csv(os.path.join(
+            model_meta_dir, "predict_results_testing.csv"), index=False)
 
         return model_metadata
 
@@ -233,6 +241,9 @@ class ProcessService:
         start = (page - 1) * limit
         end = start + limit
 
+        # get accuray
+        accuracy = self.get_validation(model_id)["accuracy"]
+
         return {
             "data": df.iloc[start:end].to_dict(orient="records"),
             "total_data": len(df),
@@ -241,7 +252,8 @@ class ProcessService:
             "total_pages": (len(df) + limit - 1) // limit,
             "current_page": page,
             "limit": limit,
-            "predict_by": predict_by
+            "predict_by": predict_by,
+            "accuracy": accuracy
         }
 
     def get_parameters(self, model_id):
@@ -253,6 +265,14 @@ class ProcessService:
             return json.load(f)
 
     def get_evaluation(self, model_id):
+        model_dir = os.path.join("src/storage/metadatas/models", model_id)
+        eval_path = os.path.join(model_dir, "evaluation_testing.json")
+        if not os.path.exists(eval_path):
+            return None
+        with open(eval_path, "r") as f:
+            return json.load(f)
+
+    def get_validation(self, model_id):
         model_dir = os.path.join("src/storage/metadatas/models", model_id)
         eval_path = os.path.join(model_dir, "evaluation.json")
         if not os.path.exists(eval_path):
