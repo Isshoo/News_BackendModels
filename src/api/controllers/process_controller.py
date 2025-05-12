@@ -153,6 +153,14 @@ class ProcessController:
                     "error": f"Each topic must have at least 200 data entries. Lacking: {', '.join(insufficient_topics)}"
                 }), 400
 
+            stats = self.preprocess_service.fetch_preprocessed_data(
+                filter_type="unprocessed")["stats"]
+            if stats["total_unprocessed"] > 0:
+                return jsonify({
+                    "error": f"Cannot train model: {stats['total_unprocessed']} data are not preprocessed yet",
+                    "unprocessed_count": stats["total_unprocessed"]
+                }), 400
+
             # ==== VALIDASI TAMBAHAN SELESAI ====
 
             model_metadata = self.process_service.train_model(

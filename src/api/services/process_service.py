@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from src.processing.trainer import HybridModelTrainer
+from src.api.services.preprocess_service import PreprocessService
 
 
 class ProcessService:
@@ -14,6 +15,7 @@ class ProcessService:
     METADATA_PATH = "src/storage/metadatas/models.json"
 
     def __init__(self):
+        self.preprocess_service = PreprocessService()
         os.makedirs(self.STORAGE_PATH, exist_ok=True)
         if not os.path.exists(self.METADATA_PATH):
             with open(self.METADATA_PATH, "w") as f:
@@ -119,6 +121,19 @@ class ProcessService:
         # Predict Results Testing
         df_predict_results_testing.to_csv(os.path.join(
             model_meta_dir, "predict_results_testing.csv"), index=False)
+
+        # Dapatkan semua indeks data yang belum di-train
+        untrained_indices = list(df[df["is_trained"] == False].index)
+
+        if untrained_indices:  # Jika ada data yang belum di-train
+            mark_result, status = self.preprocess_service.mark_data_as_trained(
+                untrained_indices)
+            if status != 200:
+                print(
+                    f"Warning: Failed to mark data as trained: {mark_result}")
+            else:
+                print(
+                    f"Successfully marked {len(untrained_indices)} records as trained")
 
         return model_metadata
 
