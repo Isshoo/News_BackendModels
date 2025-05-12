@@ -6,6 +6,7 @@ import uuid
 import pandas as pd
 from datetime import datetime
 from src.preprocessing.extends.dataset_preprocessor import DatasetPreprocessor
+from src.api.services.preprocess_service import PreprocessService
 
 
 class DatasetService:
@@ -16,6 +17,7 @@ class DatasetService:
 
     def __init__(self):
         self.preprocessor = DatasetPreprocessor()
+        self.preprocess_service = PreprocessService()
         os.makedirs(self.DATASET_DIR, exist_ok=True)
         if not os.path.exists(self.METADATA_FILE):
             with open(self.METADATA_FILE, "w") as f:
@@ -140,6 +142,14 @@ class DatasetService:
                 }
             )
 
+            # Add non-duplicate data to preprocessed dataset
+            data_to_add = [{
+                "contentSnippet": row["contentSnippet"],
+                "topik": row["topik"]
+            } for _, row in unique_rows.iterrows()]
+
+            self.preprocess_service.add_new_data(data_to_add)
+
     def fetch_datasets(self):
         """Mengambil semua dataset yang tersimpan"""
         metadata = self._load_metadata()
@@ -223,6 +233,14 @@ class DatasetService:
                 "topics_added": unique_data["topik"].value_counts().to_dict()
             }
         )
+
+        # Add non-duplicate data to preprocessed dataset
+        data_to_add = [{
+            "contentSnippet": row["contentSnippet"],
+            "topik": row["topik"]
+        } for _, row in unique_data.iterrows()]
+
+        self.preprocess_service.add_new_data(data_to_add)
 
         return {"message": f"Added {len(unique_data)} new records"}, 201
 
