@@ -1,5 +1,6 @@
 import pandas as pd
 import csv
+from datetime import datetime
 from src.preprocessing.preprocessor import Preprocessor
 from src.preprocessing.extends.text_preprocessor import TextPreprocessor
 
@@ -37,6 +38,11 @@ class DatasetPreprocessor(Preprocessor):
 
         df.drop_duplicates(subset=["preprocessedContent"], inplace=True)
         df.dropna(subset=["preprocessedContent"], inplace=True)
+
+        df["is_preprocessed"] = True
+        df["is_trained"] = False
+        df["inserted_at"] = datetime.now().isoformat()
+        df["updated_at"] = datetime.now().isoformat()
 
         return df
 
