@@ -144,3 +144,16 @@ class DatasetController:
                     return jsonify({"error": "Default model cannot be deleted"}), 404
 
         return jsonify({"message": "Dataset deleted successfully"}), 200
+
+    def add_data(self, dataset_id):
+        """ Menambahkan data baru ke dataset yang sudah diproses """
+        if dataset_id is None:
+            return jsonify({"error": "dataset_id is required"}), 400
+        data = request.json
+        if "contentSnippet" not in data or "topik" not in data:
+            return jsonify({"error": "Invalid request"}), 400
+
+        result, status_code = self.preprocess_service.add_data(
+            dataset_id, data["contentSnippet"], data["topik"]
+        )
+        return jsonify(result), status_code

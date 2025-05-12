@@ -18,3 +18,7 @@ dataset_bp.route(
 # Route untuk menghapus dataset tertentu
 dataset_bp.route(
     "/<dataset_id>", methods=["DELETE"])(dataset_controller.delete_dataset)
+
+# Route untuk menambah data pada dataset yang sudah diproses
+dataset_bp.route("/<dataset_id>/data", methods=["POST"]
+                 )(dataset_controller.add_data)

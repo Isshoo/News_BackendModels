@@ -87,3 +87,28 @@ class DatasetService:
         self._save_metadata(metadata)
 
         return True
+
+    def add_data(self, dataset_id, contentSnippet, topik):
+        metadata = self.load_metadata()
+        dataset = next((d for d in metadata if d["id"] == dataset_id), None)
+
+        if not dataset:
+            return {"error": "Preprocessed dataset not found"}, 404
+
+        if dataset["name"] == "default":
+            return {"error": "Default preprocessed dataset cannot be edited"}, 403
+
+        df = pd.read_csv(dataset["path"], sep=",")
+        new_data = pd.DataFrame({
+            "contentSnippet": [contentSnippet],
+            "topik": [topik]
+        })
+
+        if df["contentSnippet"].isin(new_data["contentSnippet"]).any():
+            return {"error": "Data already exists"}, 409
+
+        df = pd.concat([new_data, df], ignore_index=True)
+        result = self.update_preprocessed_dataset(dataset_id, df)
+        if not result:
+            return {"error": "Failed to add data"}, 500
+        return {"message": "Data added successfully"}, 201
