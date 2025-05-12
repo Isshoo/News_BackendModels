@@ -14,7 +14,7 @@ class PreprocessService:
     PREPROCESSED_DIR = "src/storage/datasets/preprocessed"
     PROCESSED_DIR = "src/storage/datasets/processed"
     METADATA_FILE = "src/storage/metadatas/preprocessed_datasets.json"
-    DEFAULT_DATASET_ID = "default-preprocessed"
+    DEFAULT_DATASET_ID = "default"
 
     def __init__(self):
         os.makedirs(self.PREPROCESSED_DIR, exist_ok=True)
@@ -35,7 +35,7 @@ class PreprocessService:
         if not default_exists:
             # Create empty default dataset
             dataset_path = os.path.join(
-                self.PREPROCESSED_DIR, "default_preprocessed.csv")
+                self.PREPROCESSED_DIR, "default.csv")
             empty_df = pd.DataFrame(columns=[
                 "contentSnippet",
                 "topik",
@@ -50,7 +50,7 @@ class PreprocessService:
 
             new_entry = {
                 "id": self.DEFAULT_DATASET_ID,
-                "raw_dataset_id": "default-dataset",
+                "raw_dataset_id": "default",
                 "path": dataset_path,
                 "name": "default",
                 "total_data": 0,

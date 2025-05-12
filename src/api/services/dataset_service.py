@@ -13,7 +13,7 @@ class DatasetService:
     DATASET_DIR = "src/storage/datasets/uploads"
     METADATA_FILE = "src/storage/metadatas/uploaded_datasets.json"
     HISTORY_FILE = "src/storage/metadatas/dataset_history.json"
-    DEFAULT_DATASET_ID = "default-dataset"
+    DEFAULT_DATASET_ID = "default"
 
     def __init__(self):
         self.preprocessor = DatasetPreprocessor()
@@ -37,14 +37,14 @@ class DatasetService:
         if not default_exists:
             # Create empty default dataset
             dataset_path = os.path.join(
-                self.DATASET_DIR, "default_dataset.csv")
+                self.DATASET_DIR, "default.csv")
             empty_df = pd.DataFrame(columns=["contentSnippet", "topik"])
             empty_df.to_csv(dataset_path, index=False, sep=",",
                             quoting=csv.QUOTE_NONNUMERIC, encoding="utf-8")
 
             new_entry = {
                 "id": self.DEFAULT_DATASET_ID,
-                "name": "default_dataset",
+                "name": "default",
                 "path": dataset_path,
                 "total_data": 0,
                 "topic_counts": {},
