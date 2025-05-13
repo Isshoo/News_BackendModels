@@ -4,9 +4,11 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 class TextVectorizer:
+    vectorizer = TfidfVectorizer()
+
     def __init__(self):
         # Initialize your vectorizer (like TfidfVectorizer)
-        self.vectorizer = TfidfVectorizer()
+        pass
 
     def fit_transform(self, corpus):
         """Transform the corpus into a matrix of TF-IDF features"""

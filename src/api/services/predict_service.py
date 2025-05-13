@@ -1,5 +1,4 @@
 from src.features.classifier import NewsClassifier
-import pandas as pd
 
 
 class PredictService:

@@ -7,6 +7,10 @@ from src.utilities.map_classification_result import map_classification_result
 
 
 class NewsClassifier:
+    text_preprocessor = TextPreprocessor()
+    valid_categories = {
+        "Ekonomi", "Teknologi", "Olahraga", "Hiburan", "GayaHidup"}  # Kategori yang valid
+
     def __init__(self, hybrid_model_path='./src/storage/models/base/hybrid_model.joblib'):
         """Inisialisasi model hybrid dan text preprocessor"""
         try:
@@ -14,10 +18,6 @@ class NewsClassifier:
         except Exception as e:
             print(f"❌ Gagal memuat Hybrid model: {e}")
             self.hybrid_model = None  # Hindari crash jika model tidak bisa dimuat
-
-        self.text_preprocessor = TextPreprocessor()
-        self.valid_categories = {
-            "Ekonomi", "Teknologi", "Olahraga", "Hiburan", "GayaHidup"}  # Kategori yang valid
 
     def classify(self, sample_text, max_retries=2):
         """ Mengklasifikasikan teks berita menggunakan model hybrid dan DeepSeek """

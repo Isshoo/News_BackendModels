@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
-from src.utilities.vectorizer import TextVectorizer
 from src.processing.algorithms.knn import CustomKNN
 from src.processing.algorithms.c5 import CustomC5
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.neighbors import KNeighborsClassifier
 import pickle
 
 

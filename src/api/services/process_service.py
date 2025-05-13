@@ -13,9 +13,9 @@ from src.api.services.preprocess_service import PreprocessService
 class ProcessService:
     STORAGE_PATH = "src/storage/models/trained/"
     METADATA_PATH = "src/storage/metadatas/models.json"
+    preprocess_service = PreprocessService()
 
     def __init__(self):
-        self.preprocess_service = PreprocessService()
         os.makedirs(self.STORAGE_PATH, exist_ok=True)
         if not os.path.exists(self.METADATA_PATH):
             with open(self.METADATA_PATH, "w") as f:
@@ -47,8 +47,13 @@ class ProcessService:
         }
 
     def train_model(self, preprocessed_dataset_id, preprocessed_dataset_path, raw_dataset_id, name, n_neighbors, split_size):
-
+        metadata = self.load_metadata()
         df = pd.read_csv(preprocessed_dataset_path, sep=",")
+
+        # cek jika sudah ada model yang diltih dengan jumlah data, n_neighbors, dan split yang sama
+        for model in metadata:
+            if model["total_data"] == len(df) and model["n_neighbors"] == n_neighbors and model["split_size"] == split_size:
+                return {"error": "Model with the same data and parameters already exists"}
 
         trainer = HybridModelTrainer(preprocessed_dataset_path)
         hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results, df_predict_results_testing, evaluation_results_testing = trainer.train(
@@ -61,7 +66,6 @@ class ProcessService:
         joblib.dump(hybrid_model, model_path)  # Simpan model
 
         # Simpan metadata umum ke models.json
-        metadata = self.load_metadata()
         model_metadata = {
             "id": model_id,
             "name": name,

@@ -15,6 +15,8 @@ class PreprocessService:
     PROCESSED_DIR = "src/storage/datasets/processed"
     METADATA_FILE = "src/storage/metadatas/preprocessed_datasets.json"
     DEFAULT_DATASET_ID = "default"
+    text_preprocessor = TextPreprocessor()
+    dataset_preprocessor = DatasetPreprocessor()
 
     def __init__(self):
         os.makedirs(self.PREPROCESSED_DIR, exist_ok=True)
@@ -22,8 +24,6 @@ class PreprocessService:
         if not os.path.exists(self.METADATA_FILE):
             with open(self.METADATA_FILE, "w") as f:
                 json.dump([], f)
-        self.text_preprocessor = TextPreprocessor()
-        self.dataset_preprocessor = DatasetPreprocessor()
         self._ensure_default_preprocessed_dataset()
 
     def _ensure_default_preprocessed_dataset(self):

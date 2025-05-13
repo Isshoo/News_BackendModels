@@ -7,8 +7,9 @@ from src.database.api.services.dataset_service import DatasetService
 
 
 class DatasetController:
+    service = DatasetService()
+
     def __init__(self):
-        self.service = DatasetService()
         self.UPLOAD_FOLDER = "src/storage/datasets/uploads/db"
 
     def get_datasets(self):

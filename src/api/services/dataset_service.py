@@ -14,10 +14,10 @@ class DatasetService:
     METADATA_FILE = "src/storage/metadatas/uploaded_datasets.json"
     HISTORY_FILE = "src/storage/metadatas/dataset_history.json"
     DEFAULT_DATASET_ID = "default"
+    preprocessor = DatasetPreprocessor()
+    preprocess_service = PreprocessService()
 
     def __init__(self):
-        self.preprocessor = DatasetPreprocessor()
-        self.preprocess_service = PreprocessService()
         os.makedirs(self.DATASET_DIR, exist_ok=True)
         if not os.path.exists(self.METADATA_FILE):
             with open(self.METADATA_FILE, "w") as f:
