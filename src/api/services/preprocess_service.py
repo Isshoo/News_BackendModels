@@ -165,6 +165,7 @@ class PreprocessService:
         if not dataset:
             return {"error": "Default preprocessed dataset not found"}, 404
 
+        full_df = pd.read_csv(dataset["path"], sep=",")
         df = pd.read_csv(dataset["path"], sep=",")
 
         # Apply filters
@@ -188,12 +189,14 @@ class PreprocessService:
             "total_pages": (total_data + limit - 1) // limit,
             "current_page": page,
             "limit": limit,
+            "topic_counts": df["topik"].value_counts().to_dict(),
             "stats": {
-                "total_old": len(df[df["is_trained"] == True]),
-                "total_new": len(df[df["is_trained"] == False]),
-                "total_preprocessed": len(df[df["is_preprocessed"] == True]),
-                "total_unprocessed": len(df[df["is_preprocessed"] == False]),
-                "topic_counts": df["topik"].value_counts().to_dict()
+                "total_all": len(full_df),
+                "total_old": len(full_df[full_df["is_trained"] == True]),
+                "total_new": len(full_df[full_df["is_trained"] == False]),
+                "total_preprocessed": len(full_df[full_df["is_preprocessed"] == True]),
+                "total_unprocessed": len(full_df[full_df["is_preprocessed"] == False]),
+                "topic_counts_all": full_df["topik"].value_counts().to_dict()
             }
         }
 
