@@ -36,8 +36,14 @@ class HybridModelTrainer:
         hybrid_model = HybridClassifier(
             n_neighbors, c5_threshold=c5_threshold, max_features=max_features)
 
+        # hitung waktu latihan
+        start_time = time.time()
         # Latih model
         hybrid_model.fit(X_train, y_train, raw_train, le)
+
+        end_time = time.time()
+
+        training_time = end_time - start_time
 
         word_stats_df = hybrid_model.get_word_stats()
 
@@ -124,7 +130,7 @@ class HybridModelTrainer:
 
         evaluation_results_testing = evaluate_model(y_testing, y_testing_pred)
 
-        return hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results, df_predict_results_testing, evaluation_results_testing
+        return hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results, df_predict_results_testing, evaluation_results_testing, training_time
 
     def train_with_gridsearch(self, param_grid=None):
         """Melatih model Hybrid C5.0-KNN dengan Grid Search untuk mencari parameter terbaik"""

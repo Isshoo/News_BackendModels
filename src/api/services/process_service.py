@@ -56,7 +56,7 @@ class ProcessService:
                 return {"error": "Model with the same data and parameters already exists"}
 
         trainer = HybridModelTrainer(preprocessed_dataset_path)
-        hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results, df_predict_results_testing, evaluation_results_testing = trainer.train(
+        hybrid_model, evaluation_results, word_stats_df, tfidf_stats, df_neighbors, df_predict_results, df_predict_results_testing, evaluation_results_testing, training_time = trainer.train(
             n_neighbors, split_size)
         split_results = self.split_dataset(
             preprocessed_dataset_path, split_size)
@@ -76,6 +76,7 @@ class ProcessService:
             "n_neighbors": n_neighbors,
             "split_size": split_size,
             "accuracy": evaluation_results["accuracy"],
+            "train_time": training_time,
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat()
         }
