@@ -101,7 +101,7 @@ class PreprocessService:
 
         # Prepare new data
         new_data = pd.DataFrame(data_list)
-        new_data["preprocessedContent"] = ""
+        new_data["preprocessedContent"] = "-"
         new_data["is_preprocessed"] = False
         new_data["is_trained"] = False
         new_data["inserted_at"] = datetime.now().isoformat()

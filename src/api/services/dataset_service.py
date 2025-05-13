@@ -79,6 +79,9 @@ class DatasetService:
 
     def save_dataset(self, filepath, dataset_name):
         """Melakukan preprocessing, menyimpan dataset, dan mencatat metadata"""
+        self._ensure_default_dataset()
+        self.preprocess_service._ensure_default_preprocessed_dataset()
+
         dataset_id = str(uuid.uuid4())
         processed_df = self.preprocessor.preprocess(filepath, sep=",")
         dataset_path = os.path.join(self.DATASET_DIR, f"{dataset_name}.csv")
