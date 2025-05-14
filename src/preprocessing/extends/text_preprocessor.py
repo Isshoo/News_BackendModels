@@ -25,7 +25,7 @@ except AttributeError:
     pass
 
 # Pastikan resource NLTK tersedia
-nltk_packages = ["punkt", "stopwords"]
+nltk_packages = ["punkt", "punkt_tab", "stopwords"]
 for pkg in nltk_packages:
     try:
         nltk.data.find(f'tokenizers/{pkg}' if pkg ==
