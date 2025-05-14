@@ -56,21 +56,21 @@ class DatasetController:
         if invalid_topics:
             return jsonify({"error": f"Invalid topics found: {', '.join(invalid_topics)}"}), 400
 
-        missing_required_topics = allowed_topics - actual_topics
-        if missing_required_topics:
-            return jsonify({"error": f"Dataset must include all 5 required topics, missing: {', '.join(missing_required_topics)}"}), 400
+        # missing_required_topics = allowed_topics - actual_topics
+        # if missing_required_topics:
+        #     return jsonify({"error": f"Dataset must include all 5 required topics, missing: {', '.join(missing_required_topics)}"}), 400
 
-        if len(df) < 1000:
-            return jsonify({"error": "Dataset must contain at least 1000 rows"}), 400
+        # if len(df) < 1000:
+        #     return jsonify({"error": "Dataset must contain at least 1000 rows"}), 400
 
-        topic_counts = df["topik"].value_counts()
-        insufficient_topics = [
-            topic for topic in allowed_topics if topic_counts.get(topic, 0) < 200
-        ]
-        if insufficient_topics:
-            return jsonify({
-                "error": f"Each topic must have at least 200 data entries. Lacking: {', '.join(insufficient_topics)}"
-            }), 400
+        # topic_counts = df["topik"].value_counts()
+        # insufficient_topics = [
+        #     topic for topic in allowed_topics if topic_counts.get(topic, 0) < 200
+        # ]
+        # if insufficient_topics:
+        #     return jsonify({
+        #         "error": f"Each topic must have at least 200 data entries. Lacking: {', '.join(insufficient_topics)}"
+        #     }), 400
 
         dataset_info = self.dataset_service.save_dataset(
             filepath, dataset_name)
