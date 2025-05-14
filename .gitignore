@@ -7,20 +7,14 @@ __pycache__/
 cache
 
 
-src/storage/datasets/base/*
-src/storage/datasets/uploads/*
-src/storage/datasets/testing/*
-src/storage/datasets/preprocessed/*
-src/storage/datasets/processed/*
-src/storage/datasets/classifications/*
-src/storage/metadatas/**
-src/storage/models/trained/*
-
-
-
-# Model
-*.pkl
-*.joblib
+# src/storage/datasets/base/*
+# src/storage/datasets/uploads/*
+# src/storage/datasets/testing/*
+# src/storage/datasets/preprocessed/*
+# src/storage/datasets/processed/*
+# src/storage/datasets/classifications/*
+# src/storage/metadatas/**
+# src/storage/models/trained/*
 
 
 # IDEs and editors
