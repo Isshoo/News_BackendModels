@@ -1,11 +1,1 @@
-[
-    {
-        "id": "default",
-        "name": "default",
-        "path": "src/storage/datasets/uploads/default.csv",
-        "total_data": 0,
-        "topic_counts": {},
-        "upload_at": "2025-05-15T06:07:20.767060",
-        "updated_at": "2025-05-15T06:07:20.767098"
-    }
-]
+[]
