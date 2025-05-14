@@ -125,7 +125,7 @@ class PreprocessService:
         return {"message": f"Added {len(unique_data)} new records"}, 201
 
     def preprocess_new_data(self):
-        """Melakukan preprocessing pada data baru yang belum diproses"""
+        """Melakukan preprocessing pada data baru yang belum diproses dan hanya menyimpan yang unik"""
         metadata = self.load_metadata()
         dataset = next(
             (d for d in metadata if d["id"] == self.DEFAULT_DATASET_ID), None)
@@ -137,13 +137,40 @@ class PreprocessService:
         # Get unprocessed data
         unprocessed = df[df["is_preprocessed"] == False]
         if len(unprocessed) == 0:
-            return {"message": "No new data to preprocess"}, 200
+            return {"error": "No new data to preprocess"}, 400
+
+        # Dictionary untuk menyimpan content unik
+        unique_contents = {}
+        duplicate_count = 0
 
         # Process each unprocessed row
         for idx, row in unprocessed.iterrows():
             preprocessed_content = self.text_preprocessor.preprocess(
                 row["contentSnippet"])
-            if preprocessed_content:
+
+            if not preprocessed_content:
+                continue  # Skip jika preprocessing menghasilkan None/empty
+
+            # Cek duplikat dengan data yang sudah ada
+            is_duplicate = False
+
+            # Cek dengan data yang sudah diproses
+            if not is_duplicate:
+                existing_processed = df[df["is_preprocessed"] == True]
+                if not existing_processed.empty:
+                    is_duplicate = existing_processed["preprocessedContent"].str.contains(
+                        preprocessed_content, case=False, regex=False).any()
+
+            # Cek dengan data yang baru diproses dalam batch ini
+            if not is_duplicate and preprocessed_content in unique_contents.values():
+                is_duplicate = True
+
+            if is_duplicate:
+                duplicate_count += 1
+                # Hapus data yang terdeteksi duplikat
+                df = df.drop(index=idx)
+            else:
+                unique_contents[idx] = preprocessed_content
                 df.at[idx, "preprocessedContent"] = preprocessed_content
                 df.at[idx, "is_preprocessed"] = True
                 df.at[idx, "updated_at"] = datetime.now().isoformat()
@@ -152,10 +179,28 @@ class PreprocessService:
         df.to_csv(dataset["path"], index=False, sep=",",
                   quoting=csv.QUOTE_NONNUMERIC, encoding="utf-8")
 
-        # Update metadata
         self._update_metadata_stats(self.DEFAULT_DATASET_ID)
+        if not unique_contents:
+            return {
+                "error": "No unique data after preprocessing",
+                "details": {
+                    "total_processed": len(unprocessed),
+                    "duplicates_found": duplicate_count,
+                    "unique_added": 0
+                }
+            }, 400
 
-        return {"message": f"Preprocessed {len(unprocessed)} new records"}, 200
+        # Update metadata
+
+        return {
+            "message": f"Preprocessed {len(unique_contents)} new unique records",
+            "results": {
+                "total_processed": len(unprocessed),
+                "duplicates_found": duplicate_count,
+                "unique_added": len(unique_contents),
+                "sample_unique_content": list(unique_contents.values())[:3] if unique_contents else []
+            }
+        }, 200
 
     def fetch_preprocessed_data(self, page=1, limit=10, filter_type="all"):
         """Mengambil data dari default preprocessed dataset dengan filter"""
@@ -215,6 +260,20 @@ class PreprocessService:
         # Hanya bisa edit data yang belum di-train
         if df.at[index, "is_trained"]:
             return {"error": "Cannot edit trained data"}, 403
+
+        if len(new_content) == 1:
+            return {"error": "Data must be at least 2 characters"}, 400
+
+        for word in new_content.split():
+            if word.isdigit():
+                return {"error": f"Data cannot contain word with only number: '{word}'"}, 400
+            elif word in string.punctuation:
+                return {"error": f"Data cannot contain word with only punctuation character: '{word}'"}, 400
+            elif all(char in string.punctuation for char in word):
+                return {"error": f"Data cannot contain word with only punctuation characters: '{word}'"}, 400
+
+        if new_content in df["preprocessedContent"].values:
+            return {"error": "Data already exists in the dataset"}, 400
 
         if new_label:
             df.at[index, "topik"] = new_label
