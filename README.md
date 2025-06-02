@@ -46,6 +46,13 @@ pip install -r requirements.txt
 
 ```env
 DEEPSEEK_API_KEY="sk-or-v1-...."
+DATABASE_URL=postgresql://news_user:news123@localhost:5432/news_db (jika nantinya akan menggunakan database)
+FLASK_APP=app.py
+FLASK_ENV=development (or production)
+FLASK_DEBUG=true (or false)
+FLASK_RUN_PORT=8000
+PYTHONUNBUFFERED=True
+PORT=8000
 ```
 
 ```bash
